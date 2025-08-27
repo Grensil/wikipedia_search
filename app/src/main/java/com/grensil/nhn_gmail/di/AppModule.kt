@@ -8,7 +8,7 @@ import com.grensil.domain.usecase.GetSummaryUseCase
 import com.grensil.domain.usecase.SearchKeywordExtractorUseCase
 import com.grensil.network.HttpClient
 
-class WikipediaModule(httpClient: HttpClient) {
+class AppModule(httpClient: HttpClient) {
     private val dataSource = WikipediaRemoteDataSource(httpClient)
     private val repository = WikipediaRepositoryImpl(dataSource)
 

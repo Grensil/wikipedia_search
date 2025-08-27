@@ -12,19 +12,32 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import com.grensil.network.HttpClient
+import com.grensil.nhn_gmail.di.AppModule
+import com.grensil.search.SearchScreen
+import com.grensil.search.SearchViewModel
+import com.grensil.search.SearchViewModelFactory
 
 class MainActivity : ComponentActivity() {
+
+    private val appModules = AppModule(HttpClient())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val searchViewModel = ViewModelProvider(
+            this,
+            SearchViewModelFactory(
+                appModules.getSummaryUseCase(),
+                appModules.getMediaListUseCase()
+            )
+        ).get(SearchViewModel::class.java)
+
         setContent {
-            enableEdgeToEdge()
-            Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
-                Box(modifier = Modifier.padding(top = paddingValues.calculateTopPadding())) {
-                    Text(text = "text", fontSize = 24.sp, color = Color.Cyan)
-                }
-            }
+            SearchScreen(searchViewModel)
+
         }
     }
 }

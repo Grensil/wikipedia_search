@@ -1,21 +1,18 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = "com.grensil.nhn_gmail"
+    namespace = "com.grensil.search"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.grensil.nhn_gmail"
         minSdk = 23
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -34,18 +31,15 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         compose = true
     }
-
 }
 
 dependencies {
-    implementation(project(":core:network"))
-    implementation(project(":core:data"))
-    implementation(project(":core:domain"))
 
-    implementation(project(":feature:search"))
+    implementation(project(":core:domain"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -64,8 +58,4 @@ dependencies {
 
     // Activity + Compose 통합
     implementation(libs.androidx.activity.compose)
-
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }
