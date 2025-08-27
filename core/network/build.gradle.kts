@@ -1,21 +1,18 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
+    id("maven-publish")
 }
 
 android {
-    namespace = "com.grensil.nhn_gmail"
+    namespace = "com.grensil.network"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.grensil.nhn_gmail"
         minSdk = 23
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -34,10 +31,27 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-    buildFeatures {
-        compose = true
-    }
+}
 
+
+tasks.register<Jar>("packageJar") {
+    archiveBaseName.set("nhn-http-client")
+    archiveVersion.set("1.0.0")
+    from(android.sourceSets.getByName("main").java.srcDirs)
+    include("**/*.kt")
+    include("**/*.java")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("release") {
+            groupId = "com.nhn.core"
+            artifactId = "network"
+            version = "1.0.0"
+
+            artifact(tasks.named("packageJar"))
+        }
+    }
 }
 
 dependencies {
@@ -45,21 +59,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-
-    // Compose BOM (버전 관리 자동)
-    implementation(platform(libs.androidx.compose.bom))
-
-    // Compose UI 필수
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.material3)
-
-    // Preview 기능 (선택)
-    implementation(libs.androidx.ui.tooling.preview)
-    debugImplementation(libs.androidx.ui.tooling)
-
-    // Activity + Compose 통합
-    implementation(libs.androidx.activity.compose)
-
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -21,3 +21,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "nhn_gmail"
 include(":app")
+include(":core:data")
+
+include(":core:network")
+include(":core:domain")
