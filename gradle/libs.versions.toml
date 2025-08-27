@@ -15,6 +15,10 @@ navigationCompose = "2.9.3"
 navigationComposeJvmstubs = "2.9.3"
 navigationRuntimeAndroid = "2.9.3"
 navigationRuntimeAndroidVersion = "2.9.3"
+runtimeAndroid = "1.9.0"
+uiGraphicsAndroid = "1.9.0"
+foundationLayoutAndroid = "1.9.0"
+foundationAndroid = "1.9.0"
 
 
 [libraries]
@@ -35,6 +39,10 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidx-navigation-compose-jvmstubs = { group = "androidx.navigation", name = "navigation-compose-jvmstubs", version.ref = "navigationComposeJvmstubs" }
 androidx-navigation-runtime-android = { group = "androidx.navigation", name = "navigation-runtime-android", version.ref = "navigationRuntimeAndroid" }
 navigation-runtime-android = { group = "androidx.navigation", name = "navigation-runtime-android", version.ref = "navigationRuntimeAndroidVersion" }
+androidx-runtime-android = { group = "androidx.compose.runtime", name = "runtime-android", version.ref = "runtimeAndroid" }
+androidx-ui-graphics-android = { group = "androidx.compose.ui", name = "ui-graphics-android", version.ref = "uiGraphicsAndroid" }
+androidx-foundation-layout-android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "foundationLayoutAndroid" }
+androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

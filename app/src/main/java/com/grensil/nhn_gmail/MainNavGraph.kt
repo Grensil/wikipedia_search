@@ -2,21 +2,14 @@ package com.grensil.nhn_gmail
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavHostController
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -57,17 +50,14 @@ fun MainNavGraph(navController: NavHostController) {
     val appModules = AppModule(HttpClient())
     val owner = LocalViewModelStoreOwner.current
     NavHost(
-        navController = navController,
-        startDestination = TabScreen.Search.route
+        navController = navController, startDestination = TabScreen.Search.route
     ) {
         composable(TabScreen.Search.route) { backStackEntry ->
 
             val searchViewModel = owner?.let {
                 ViewModelProvider(
-                    it,
-                    SearchViewModelFactory(
-                        appModules.getSummaryUseCase(),
-                        appModules.getMediaListUseCase()
+                    it, SearchViewModelFactory(
+                        appModules.getSummaryUseCase(), appModules.getMediaListUseCase()
                     )
                 ).get(SearchViewModel::class.java)
             }
