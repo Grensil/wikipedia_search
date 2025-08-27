@@ -1,6 +1,5 @@
 package com.grensil.search
 
-import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.grensil.domain.usecase.GetMediaListUseCase

@@ -57,13 +57,15 @@ dependencies {
     // Compose UI 필수
     implementation(libs.androidx.ui)
     implementation(libs.androidx.material3)
-
-    // Preview 기능 (선택)
+    implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.navigation.runtime.android)
     debugImplementation(libs.androidx.ui.tooling)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     // Activity + Compose 통합
     implementation(libs.androidx.activity.compose)
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

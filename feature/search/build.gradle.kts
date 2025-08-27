@@ -54,6 +54,7 @@ dependencies {
 
     // Preview 기능 (선택)
     implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.navigation.runtime.android)
     debugImplementation(libs.androidx.ui.tooling)
 
     // Activity + Compose 통합
