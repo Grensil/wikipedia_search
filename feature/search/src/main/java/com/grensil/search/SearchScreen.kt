@@ -1,5 +1,6 @@
 package com.grensil.search
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,7 +42,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.grensil.domain.dto.MediaItem
+import com.grensil.domain.dto.Summary
 import com.grensil.ui.component.CachedImage
+import androidx.compose.foundation.lazy.LazyListState
 
 @Composable
 fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
@@ -51,7 +55,12 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
 
     val listState = rememberLazyListState()
 
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Top) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background), 
+        verticalArrangement = Arrangement.Top
+    ) {
 
         Spacer(
             modifier = Modifier
@@ -83,91 +92,241 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
 
             is SearchUiState.Success -> {
                 val data = searchedData as SearchUiState.Success
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .padding(16.dp)
-                        .clickable {
-                            navController.navigate("detail/${searchQuery}") {
-                                launchSingleTop = true
-                            }
-                        },
-                    verticalArrangement = Arrangement.Top
-                ) {
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CachedImage(
-                            url = data.summary.thumbnailUrl,
-                            modifier = Modifier
-                                .width(120.dp)
-                                .height(80.dp)
-                        )
-                    }
-
-                    Spacer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(16.dp)
-                    )
-
-                    Text(
-                        modifier = Modifier.wrapContentSize(),
-                        text = data.summary.title,
-                        textAlign = TextAlign.Start,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    Text(
-                        modifier = Modifier.wrapContentSize(),
-                        text = data.summary.extract,
-                        textAlign = TextAlign.Start,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(top = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    items(count = data.mediaList.size) { index ->
-                        MediaItemView(
-                            mediaItem = data.mediaList[index],
-                            itemOnClick = {
-                                viewModel.getExtractorKeyword(caption = data.mediaList[index].caption)
-                            })
-                    }
-                }
+                SearchSuccessContent(
+                    summary = data.summary,
+                    mediaList = data.mediaList,
+                    searchQuery = searchQuery,
+                    listState = listState,
+                    navController = navController,
+                    viewModel = viewModel
+                )
             }
 
-            is SearchUiState.Error -> Text(
-                "Error: ${(searchedData as SearchUiState.Error).message}",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            )
+            is SearchUiState.PartialSuccess -> {
+                val data = searchedData as SearchUiState.PartialSuccess
+                SearchPartialSuccessContent(
+                    partialData = data,
+                    searchQuery = searchQuery,
+                    listState = listState,
+                    navController = navController,
+                    viewModel = viewModel
+                )
+            }
+
+            is SearchUiState.Error -> {
+                val data = searchedData as SearchUiState.Error
+                Text(
+                    "Error: ${data.message}",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
+            }
         }
     }
 }
 
 
 @Composable
-fun SearchContent(uiState: SearchUiState) {
+fun SearchSuccessContent(
+    summary: Summary,
+    mediaList: List<MediaItem>,
+    searchQuery: String,
+    listState: LazyListState,
+    navController: NavHostController,
+    viewModel: SearchViewModel
+) {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(16.dp)
+                .clickable {
+                    try {
+                        navController.navigate("detail/${searchQuery}") {
+                            launchSingleTop = true
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("SearchScreen", "Navigation failed: ${e.message}")
+                    }
+                },
+            verticalArrangement = Arrangement.Top
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                CachedImage(
+                    url = summary.thumbnailUrl,
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(80.dp)
+                )
+            }
 
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(16.dp)
+            )
+
+            Text(
+                modifier = Modifier.wrapContentSize(),
+                text = summary.title,
+                textAlign = TextAlign.Start,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Text(
+                modifier = Modifier.wrapContentSize(),
+                text = summary.extract,
+                textAlign = TextAlign.Start,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentPadding = PaddingValues(top = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            items(count = mediaList.size) { index ->
+                MediaItemView(
+                    mediaItem = mediaList[index],
+                    itemOnClick = {
+                        viewModel.getExtractorKeyword(caption = mediaList[index].caption)
+                    })
+            }
+        }
+    }
+}
+
+@Composable
+fun SearchPartialSuccessContent(
+    partialData: SearchUiState.PartialSuccess,
+    searchQuery: String,
+    listState: LazyListState,
+    navController: NavHostController,
+    viewModel: SearchViewModel
+) {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // Summary 섹션
+        partialData.summary?.let { summary ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(16.dp)
+                    .clickable {
+                        try {
+                            navController.navigate("detail/${searchQuery}") {
+                                launchSingleTop = true
+                                // DetailScreen은 SearchScreen 위에만 존재해야 함
+                            }
+                        } catch (e: Exception) {
+                            // Navigation 실패시 로그 출력
+                            android.util.Log.e("SearchScreen", "Navigation failed: ${e.message}")
+                        }
+                    },
+                verticalArrangement = Arrangement.Top
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CachedImage(
+                        url = summary.thumbnailUrl,
+                        modifier = Modifier
+                            .width(120.dp)
+                            .height(80.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    modifier = Modifier.wrapContentSize(),
+                    text = summary.title,
+                    textAlign = TextAlign.Start,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    modifier = Modifier.wrapContentSize(),
+                    text = summary.extract,
+                    textAlign = TextAlign.Start,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+
+        // Summary 에러 표시
+        partialData.summaryError?.let { error ->
+            Text(
+                text = "요약 정보: $error",
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+        }
+
+        // MediaList 섹션
+        partialData.mediaList?.let { mediaList ->
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentPadding = PaddingValues(top = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(count = mediaList.size) { index ->
+                    MediaItemView(
+                        mediaItem = mediaList[index],
+                        itemOnClick = {
+                            viewModel.getExtractorKeyword(caption = mediaList[index].caption)
+                        })
+                }
+            }
+        } ?: run {
+            // MediaList가 없고 에러가 있을 때 여전히 weight를 차지하도록 Spacer 추가
+            if (partialData.mediaListError != null) {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+
+        // MediaList 에러 표시
+        partialData.mediaListError?.let { error ->
+            Text(
+                text = "미디어 목록: $error",
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+        }
+    }
 }
 
 @Composable
