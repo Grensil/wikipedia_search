@@ -10,10 +10,15 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.grensil.detail.DetailScreen
+import com.grensil.detail.DetailViewModel
+import com.grensil.detail.DetailViewModelFactory
 import com.grensil.network.HttpClient
 import com.grensil.nhn_gmail.di.AppModule
 import com.grensil.search.SearchScreen
@@ -66,8 +71,24 @@ fun MainNavGraph(navController: NavHostController) {
                 SearchScreen(viewModel = it, navController = navController)
             }
         }
-        composable(TabScreen.Detail.route) { backStackEntry ->
-            //SearchScreen(navController = navController)
+        composable(route = TabScreen.Detail.route,
+            arguments = listOf(
+                navArgument("searchQuery") { type = NavType.StringType },
+            ),) { backStackEntry ->
+
+            val detailViewModel = owner?.let {
+                ViewModelProvider(
+                    it, DetailViewModelFactory(
+                        appModules.getDetailPageUrlUseCase(),
+                        appModules.getSearchKeywordExtractorUseCase()
+                    )
+                ).get(DetailViewModel::class.java)
+            }
+
+            val keyword = backStackEntry.arguments?.getString("searchQuery")
+            detailViewModel?.let {
+                DetailScreen(viewModel = it, navController = navController,keyword = keyword)
+            }
         }
     }
 }

@@ -25,5 +25,7 @@ include(":core:data")
 
 include(":core:network")
 include(":core:domain")
-include(":feature:search")
 include(":core:ui")
+
+include(":feature:search")
+include(":feature:detail")

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.grensil.ui"
+    namespace = "com.grensil.detail"
     compileSdk = 36
 
     defaultConfig {
@@ -38,6 +38,9 @@ android {
 
 dependencies {
 
+    implementation(project(":core:domain"))
+    implementation(project(":core:ui"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -56,4 +59,9 @@ dependencies {
 
     // Activity + Compose 통합
     implementation(libs.androidx.activity.compose)
+
+    // Test dependencies - Android API only
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }

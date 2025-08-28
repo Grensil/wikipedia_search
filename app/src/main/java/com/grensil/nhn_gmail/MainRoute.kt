@@ -8,5 +8,5 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class TabScreen(val route: String) {
     object Search : TabScreen("search")
-    object Detail : TabScreen("detail")
+    object Detail : TabScreen("detail/{searchQuery}")
 }
