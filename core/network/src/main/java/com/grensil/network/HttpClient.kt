@@ -9,6 +9,7 @@ import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.UnknownHostException
 import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLException
 
 /**
  * NHN HTTP Client Library
@@ -128,7 +129,7 @@ class HttpClient {
             )
         } catch (e: UnknownHostException) {
             throw NhnNetworkException.ConnectionExceptionNhn("Unknown host: ${request.url}", e)
-        } catch (e: NhnNetworkException.SSLExceptionNhn) {
+        } catch (e: SSLException) {
             throw NhnNetworkException.SSLExceptionNhn("SSL connection failed: ${request.url}", e)
         } catch (e: MalformedURLException) {
             throw NhnNetworkException.InvalidUrlExceptionNhn("Invalid URL format: ${request.url}", e)

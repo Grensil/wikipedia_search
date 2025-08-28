@@ -60,4 +60,9 @@ dependencies {
 
     // Activity + Compose 통합
     implementation(libs.androidx.activity.compose)
+
+    // Test dependencies - Android API only
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }

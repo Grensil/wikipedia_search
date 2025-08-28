@@ -19,6 +19,9 @@ runtimeAndroid = "1.9.0"
 uiGraphicsAndroid = "1.9.0"
 foundationLayoutAndroid = "1.9.0"
 foundationAndroid = "1.9.0"
+mockito = "5.0.0"
+mockitoKotlin = "5.0.0"
+coroutinesTest = "1.7.3"
 
 
 [libraries]
@@ -43,6 +46,9 @@ androidx-runtime-android = { group = "androidx.compose.runtime", name = "runtime
 androidx-ui-graphics-android = { group = "androidx.compose.ui", name = "ui-graphics-android", version.ref = "uiGraphicsAndroid" }
 androidx-foundation-layout-android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "foundationLayoutAndroid" }
 androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
