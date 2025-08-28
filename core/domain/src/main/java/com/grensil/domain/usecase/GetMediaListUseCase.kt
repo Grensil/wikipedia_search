@@ -40,7 +40,7 @@ class GetMediaListUseCase(
             .trim()
             .replace("\\s+".toRegex(), " ")
             .split(" ")
-            .joinToString("_") { it.lowercase().capitalize() }
+            .joinToString("_") { it.lowercase().replaceFirstChar { char -> char.uppercase() } }
     }
 
     /**

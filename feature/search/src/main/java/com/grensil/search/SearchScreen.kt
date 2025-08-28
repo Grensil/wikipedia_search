@@ -116,6 +116,7 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
     }
 }
 
+
 @Composable
 fun SearchContent(uiState: SearchUiState) {
 

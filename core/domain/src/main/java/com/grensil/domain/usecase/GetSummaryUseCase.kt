@@ -44,6 +44,6 @@ class GetSummaryUseCase(
             .trim()
             .replace("\\s+".toRegex(), " ") // 연속 공백을 단일 공백으로
             .split(" ")
-            .joinToString("_") { it.lowercase().capitalize() } // 각 단어 첫글자 대문자
+            .joinToString("_") { it.lowercase().replaceFirstChar { char -> char.uppercase() } } // 각 단어 첫글자 대문자
     }
 }
