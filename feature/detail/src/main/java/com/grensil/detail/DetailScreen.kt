@@ -66,9 +66,15 @@ fun DetailScreen(
                 ) {
                     IconButton(
                         onClick = { 
-                            if (navController.previousBackStackEntry != null) {
+                            val previousEntry = navController.previousBackStackEntry
+                            android.util.Log.d("DetailScreen", "Previous entry exists: ${previousEntry != null}")
+                            android.util.Log.d("DetailScreen", "Previous route: ${previousEntry?.destination?.route}")
+                            
+                            if (previousEntry != null) {
+                                android.util.Log.d("DetailScreen", "Popping back stack")
                                 navController.popBackStack()
                             } else {
+                                android.util.Log.d("DetailScreen", "No previous entry, navigating to search")
                                 navController.navigate(Routes.SEARCH) {
                                     popUpTo(0) { inclusive = true }
                                 }

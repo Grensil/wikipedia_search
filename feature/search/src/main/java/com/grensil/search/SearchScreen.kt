@@ -235,9 +235,7 @@ fun SearchSuccessContent(
                         onTap = {
                             try {
                                 val route = Routes.Detail.createRoute(searchQuery)
-                                navController.navigate(route) {
-                                    launchSingleTop = true
-                                }
+                                navController.navigate(route)
                             } catch (e: Exception) {
                                 Log.e("SearchScreen", "Navigation failed: ${e.message}")
                                 coroutineScope.launch {
@@ -352,9 +350,7 @@ fun SearchPartialSuccessContent(
                         onTap = {
                             try {
                                 val route = Routes.Detail.createRoute(searchQuery)
-                                navController.navigate(route) {
-                                    launchSingleTop = true
-                                }
+                                navController.navigate(route)
                             } catch (e: Exception) {
                                 Log.e("SearchScreen", "Navigation failed: ${e.message}")
                                 coroutineScope.launch {
