@@ -45,8 +45,10 @@ import com.grensil.ui.component.CachedImage
 @Composable
 fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
 
-    val uiState by viewModel.uiState.collectAsState()
+    val searchedData by viewModel.searchedData.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val extractedKeyword by viewModel.extractedKeyword.collectAsState()
+
     val listState = rememberLazyListState()
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Top) {
@@ -70,19 +72,24 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
             )
         }
 
-        when (uiState) {
+        when (searchedData) {
             is SearchUiState.Idle -> {}
-            is SearchUiState.Loading -> CircularProgressIndicator(modifier = Modifier.padding(16.dp)
-                .size(40.dp)
-                .align(Alignment.CenterHorizontally))
+            is SearchUiState.Loading -> CircularProgressIndicator(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .size(40.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+
             is SearchUiState.Success -> {
-                val data = uiState as SearchUiState.Success
+                val data = searchedData as SearchUiState.Success
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight()
-                        .padding(16.dp).clickable {
+                        .padding(16.dp)
+                        .clickable {
                             navController.navigate("detail/${searchQuery}") {
                                 launchSingleTop = true
                             }
@@ -138,13 +145,21 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     items(count = data.mediaList.size) { index ->
-                        MediaItemView(data.mediaList[index])
+                        MediaItemView(
+                            mediaItem = data.mediaList[index],
+                            itemOnClick = {
+                                viewModel.getExtractorKeyword(caption = data.mediaList[index].caption)
+                            })
                     }
                 }
             }
 
-            is SearchUiState.Error -> Text("Error: ${(uiState as SearchUiState.Error).message}",
-                modifier = Modifier.fillMaxWidth().padding(16.dp))
+            is SearchUiState.Error -> Text(
+                "Error: ${(searchedData as SearchUiState.Error).message}",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
         }
     }
 }
@@ -156,12 +171,15 @@ fun SearchContent(uiState: SearchUiState) {
 }
 
 @Composable
-fun MediaItemView(mediaItem: MediaItem) {
+fun MediaItemView(mediaItem: MediaItem, itemOnClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(100.dp)
-            .padding(16.dp),
+            .padding(16.dp)
+            .clickable {
+                itemOnClick.invoke()
+            },
         verticalAlignment = Alignment.CenterVertically
     ) {
         CachedImage(url = mediaItem.imageUrl, modifier = Modifier.size(80.dp))

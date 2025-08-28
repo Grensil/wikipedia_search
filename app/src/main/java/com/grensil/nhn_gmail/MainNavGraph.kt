@@ -1,5 +1,8 @@
 package com.grensil.nhn_gmail
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -57,12 +60,38 @@ fun MainNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController, startDestination = TabScreen.Search.route
     ) {
-        composable(TabScreen.Search.route) { backStackEntry ->
+        composable(route = TabScreen.Search.route,
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = tween(300)
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { -it },
+                    animationSpec = tween(300)
+                )
+            },
+            popEnterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { -it },
+                    animationSpec = tween(300)
+                )
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(300)
+                )
+            }) { backStackEntry ->
 
             val searchViewModel = owner?.let {
                 ViewModelProvider(
                     it, SearchViewModelFactory(
-                        appModules.getSummaryUseCase(), appModules.getMediaListUseCase()
+                        appModules.getSummaryUseCase(),
+                        appModules.getMediaListUseCase(),
+                        appModules.getSearchKeywordExtractorUseCase()
                     )
                 ).get(SearchViewModel::class.java)
             }
@@ -74,7 +103,31 @@ fun MainNavGraph(navController: NavHostController) {
         composable(route = TabScreen.Detail.route,
             arguments = listOf(
                 navArgument("searchQuery") { type = NavType.StringType },
-            ),) { backStackEntry ->
+            ),
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = tween(300)
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { -it },
+                    animationSpec = tween(300)
+                )
+            },
+            popEnterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { -it },
+                    animationSpec = tween(300)
+                )
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(300)
+                )
+            }) { backStackEntry ->
 
             val detailViewModel = owner?.let {
                 ViewModelProvider(
