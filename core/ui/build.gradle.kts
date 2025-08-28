@@ -41,11 +41,19 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.runtime.android)
-    implementation(libs.androidx.ui.graphics.android)
-    implementation(libs.androidx.foundation.layout.android)
-    implementation(libs.androidx.foundation.android)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+
+    // Compose BOM (버전 관리 자동)
+    implementation(platform(libs.androidx.compose.bom))
+
+    // Compose UI 필수
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.material3)
+
+    // Preview 기능 (선택)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.navigation.runtime.android)
+    debugImplementation(libs.androidx.ui.tooling)
+
+    // Activity + Compose 통합
+    implementation(libs.androidx.activity.compose)
 }
