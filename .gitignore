@@ -9,7 +9,15 @@
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+**/build/
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+
+# APK Files
+*.apk
+*.aab
+
+# Generated APK with custom name
+Nhn_Grensil_*.apk

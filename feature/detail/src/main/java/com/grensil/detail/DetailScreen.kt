@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
+import com.grensil.navigation.Routes
 
 @Composable
 fun DetailScreen(
@@ -68,7 +69,7 @@ fun DetailScreen(
                             if (navController.previousBackStackEntry != null) {
                                 navController.popBackStack()
                             } else {
-                                navController.navigate("search") {
+                                navController.navigate(Routes.SEARCH) {
                                     popUpTo(0) { inclusive = true }
                                 }
                             }

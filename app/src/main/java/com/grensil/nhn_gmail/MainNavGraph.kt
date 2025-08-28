@@ -28,6 +28,7 @@ import com.grensil.detail.DetailViewModelFactory
 import com.grensil.search.SearchScreen
 import com.grensil.search.SearchViewModel
 import com.grensil.search.SearchViewModelFactory
+import com.grensil.navigation.Routes
 
 @Composable
 fun MainScreen() {
@@ -61,9 +62,9 @@ fun MainNavGraph(navController: NavHostController) {
 
     val owner = LocalViewModelStoreOwner.current
     NavHost(
-        navController = navController, startDestination = TabScreen.Search.route
+        navController = navController, startDestination = Routes.SEARCH
     ) {
-        composable(route = TabScreen.Search.route,
+        composable(route = Routes.SEARCH,
             enterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { it },
@@ -103,7 +104,7 @@ fun MainNavGraph(navController: NavHostController) {
                 SearchScreen(viewModel = it, navController = navController)
             }
         }
-        composable(route = TabScreen.Detail.route,
+        composable(route = Routes.DETAIL_TEMPLATE,
             arguments = listOf(
                 navArgument("searchQuery") { type = NavType.StringType },
             ),
@@ -141,9 +142,10 @@ fun MainNavGraph(navController: NavHostController) {
                 ).get(DetailViewModel::class.java)
             }
 
-            val keyword = backStackEntry.arguments?.getString("searchQuery")
+            val encodedKeyword = backStackEntry.arguments?.getString("searchQuery")
+            val keyword = Routes.Detail.extractSearchQuery(encodedKeyword)
             detailViewModel?.let {
-                DetailScreen(viewModel = it, navController = navController,keyword = keyword)
+                DetailScreen(viewModel = it, navController = navController, keyword = keyword)
             }
         }
     }

@@ -1,8 +1,10 @@
 package com.grensil.search
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -28,10 +30,22 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -45,84 +59,142 @@ import com.grensil.domain.dto.MediaItem
 import com.grensil.domain.dto.Summary
 import com.grensil.ui.component.CachedImage
 import androidx.compose.foundation.lazy.LazyListState
+import com.grensil.navigation.Routes
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
 
     val searchedData by viewModel.searchedData.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
-    val extractedKeyword by viewModel.extractedKeyword.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     val listState = rememberLazyListState()
+    val pullToRefreshState = rememberPullToRefreshState()
+    val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background), 
-        verticalArrangement = Arrangement.Top
-    ) {
-
-        Spacer(
+    // PullToRefreshBox를 최상위에 배치하여 전체 화면에서 제스처 인식
+    Box(modifier = Modifier.fillMaxSize()) {
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                Log.d("Logd","onRefresh")
+                if (searchQuery.isNotBlank()) {
+                    coroutineScope.launch {
+                        viewModel.refreshSearch(searchQuery)
+                    }
+                }
+            },
+            state = pullToRefreshState,
             modifier = Modifier
-                .height(16.dp)
-                .fillMaxWidth()
-        )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                    })
+                }
         ) {
-
-            SearchTextField(
-                query = searchQuery, onQueryChange = viewModel::search, onBackClick = {
-                    navController.popBackStack()
-                }, modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        when (searchedData) {
-            is SearchUiState.Idle -> {}
-            is SearchUiState.Loading -> CircularProgressIndicator(
+            Column(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .size(40.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-
-            is SearchUiState.Success -> {
-                val data = searchedData as SearchUiState.Success
-                SearchSuccessContent(
-                    summary = data.summary,
-                    mediaList = data.mediaList,
-                    searchQuery = searchQuery,
-                    listState = listState,
-                    navController = navController,
-                    viewModel = viewModel
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures(onTap = {
+                            focusManager.clearFocus()
+                        })
+                    }
+            ) {
+                // 고정 영역 (SearchTextField)
+                Spacer(
+                    modifier = Modifier
+                        .height(16.dp)
+                        .fillMaxWidth()
                 )
-            }
 
-            is SearchUiState.PartialSuccess -> {
-                val data = searchedData as SearchUiState.PartialSuccess
-                SearchPartialSuccessContent(
-                    partialData = data,
-                    searchQuery = searchQuery,
-                    listState = listState,
-                    navController = navController,
-                    viewModel = viewModel
-                )
-            }
-
-            is SearchUiState.Error -> {
-                val data = searchedData as SearchUiState.Error
-                Text(
-                    "Error: ${data.message}",
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
-                )
+                        .padding(horizontal = 16.dp)
+                ) {
+                    SearchTextField(
+                        query = searchQuery, 
+                        onQueryChange = viewModel::search, 
+                        onBackClick = {
+                            navController.popBackStack()
+                        }, 
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // 콘텐츠 영역
+                when (searchedData) {
+                is SearchUiState.Idle -> {}
+                is SearchUiState.Loading -> {
+                    // Pull to Refresh 중이 아닐 때만 CircularProgressIndicator 표시
+                    if (!isRefreshing) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .size(40.dp)
+                            )
+                        }
+                    }
+                }
+
+                is SearchUiState.Success -> {
+                    val data = searchedData as SearchUiState.Success
+                    SearchSuccessContent(
+                        summary = data.summary,
+                        mediaList = data.mediaList,
+                        searchQuery = searchQuery,
+                        listState = listState,
+                        navController = navController,
+                        viewModel = viewModel,
+                        focusManager = focusManager,
+                        snackbarHostState = snackbarHostState,
+                        coroutineScope = coroutineScope,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                is SearchUiState.PartialSuccess -> {
+                    val data = searchedData as SearchUiState.PartialSuccess
+                    SearchPartialSuccessContent(
+                        partialData = data,
+                        searchQuery = searchQuery,
+                        listState = listState,
+                        navController = navController,
+                        viewModel = viewModel,
+                        focusManager = focusManager,
+                        snackbarHostState = snackbarHostState,
+                        coroutineScope = coroutineScope,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                is SearchUiState.Error -> {
+                    val data = searchedData as SearchUiState.Error
+                    Text(
+                        "Error: ${data.message}",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+                }
             }
         }
+        
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
@@ -134,24 +206,48 @@ fun SearchSuccessContent(
     searchQuery: String,
     listState: LazyListState,
     navController: NavHostController,
-    viewModel: SearchViewModel
+    viewModel: SearchViewModel,
+    focusManager: androidx.compose.ui.focus.FocusManager,
+    snackbarHostState: SnackbarHostState,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    modifier: Modifier = Modifier
 ) {
+    // 스크롤 시 키보드 숨김
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }
+            .collect { isScrolling ->
+                if (isScrolling) {
+                    focusManager.clearFocus()
+                }
+            }
+    }
+
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .padding(16.dp)
-                .clickable {
-                    try {
-                        navController.navigate("detail/${searchQuery}") {
-                            launchSingleTop = true
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            try {
+                                val route = Routes.Detail.createRoute(searchQuery)
+                                navController.navigate(route) {
+                                    launchSingleTop = true
+                                }
+                            } catch (e: Exception) {
+                                Log.e("SearchScreen", "Navigation failed: ${e.message}")
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "페이지를 열 수 없습니다. 다시 시도해주세요."
+                                    )
+                                }
+                            }
                         }
-                    } catch (e: Exception) {
-                        android.util.Log.e("SearchScreen", "Navigation failed: ${e.message}")
-                    }
+                    )
                 },
             verticalArrangement = Arrangement.Top
         ) {
@@ -198,7 +294,12 @@ fun SearchSuccessContent(
             state = listState,
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .weight(1f)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                    })
+                },
             contentPadding = PaddingValues(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
@@ -207,7 +308,8 @@ fun SearchSuccessContent(
                     mediaItem = mediaList[index],
                     itemOnClick = {
                         viewModel.getExtractorKeyword(caption = mediaList[index].caption)
-                    })
+                    }
+                )
             }
         }
     }
@@ -219,85 +321,101 @@ fun SearchPartialSuccessContent(
     searchQuery: String,
     listState: LazyListState,
     navController: NavHostController,
-    viewModel: SearchViewModel
+    viewModel: SearchViewModel,
+    focusManager: androidx.compose.ui.focus.FocusManager,
+    snackbarHostState: SnackbarHostState,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    modifier: Modifier = Modifier
 ) {
+    // 스크롤 시 키보드 숨김
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }
+            .collect { isScrolling ->
+                if (isScrolling) {
+                    focusManager.clearFocus()
+                }
+            }
+    }
+
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
-        // Summary 섹션
-        partialData.summary?.let { summary ->
-            Column(
+        // Summary 섹션 (항상 있음)
+        val summary = partialData.summary
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(16.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            try {
+                                val route = Routes.Detail.createRoute(searchQuery)
+                                navController.navigate(route) {
+                                    launchSingleTop = true
+                                }
+                            } catch (e: Exception) {
+                                Log.e("SearchScreen", "Navigation failed: ${e.message}")
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "페이지를 열 수 없습니다. 다시 시도해주세요."
+                                    )
+                                }
+                            }
+                        }
+                    )
+                },
+            verticalArrangement = Arrangement.Top
+        ) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
-                    .padding(16.dp)
-                    .clickable {
-                        try {
-                            navController.navigate("detail/${searchQuery}") {
-                                launchSingleTop = true
-                                // DetailScreen은 SearchScreen 위에만 존재해야 함
-                            }
-                        } catch (e: Exception) {
-                            // Navigation 실패시 로그 출력
-                            android.util.Log.e("SearchScreen", "Navigation failed: ${e.message}")
-                        }
-                    },
-                verticalArrangement = Arrangement.Top
+                    .wrapContentHeight(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
-                Row(
+                CachedImage(
+                    url = summary.thumbnailUrl,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    CachedImage(
-                        url = summary.thumbnailUrl,
-                        modifier = Modifier
-                            .width(120.dp)
-                            .height(80.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    modifier = Modifier.wrapContentSize(),
-                    text = summary.title,
-                    textAlign = TextAlign.Start,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Text(
-                    modifier = Modifier.wrapContentSize(),
-                    text = summary.extract,
-                    textAlign = TextAlign.Start,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
+                        .width(120.dp)
+                        .height(80.dp)
                 )
             }
-        }
 
-        // Summary 에러 표시
-        partialData.summaryError?.let { error ->
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
-                text = "요약 정보: $error",
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                modifier = Modifier.wrapContentSize(),
+                text = summary.title,
+                textAlign = TextAlign.Start,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Text(
+                modifier = Modifier.wrapContentSize(),
+                text = summary.extract,
+                textAlign = TextAlign.Start,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
-        // MediaList 섹션
-        partialData.mediaList?.let { mediaList ->
+        // MediaList 섹션 - 비어있을 때는 로딩 인디케이터 표시
+        val mediaList = partialData.mediaList
+        if (mediaList.isNotEmpty()) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .pointerInput(Unit) {
+                        detectTapGestures(onTap = {
+                            focusManager.clearFocus()
+                        })
+                    },
                 contentPadding = PaddingValues(top = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -306,25 +424,29 @@ fun SearchPartialSuccessContent(
                         mediaItem = mediaList[index],
                         itemOnClick = {
                             viewModel.getExtractorKeyword(caption = mediaList[index].caption)
-                        })
+                        }
+                    )
                 }
             }
-        } ?: run {
-            // MediaList가 없고 에러가 있을 때 여전히 weight를 차지하도록 Spacer 추가
-            if (partialData.mediaListError != null) {
-                Spacer(modifier = Modifier.weight(1f))
-            }
-        }
-
-        // MediaList 에러 표시
-        partialData.mediaListError?.let { error ->
-            Text(
-                text = "미디어 목록: $error",
-                color = MaterialTheme.colorScheme.error,
+        } else {
+            // MediaList 로딩 중 인디케이터 표시
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-            )
+                    .weight(1f)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(40.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "미디어 로딩 중...",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }
@@ -336,8 +458,10 @@ fun MediaItemView(mediaItem: MediaItem, itemOnClick: () -> Unit) {
             .fillMaxWidth()
             .height(100.dp)
             .padding(16.dp)
-            .clickable {
-                itemOnClick.invoke()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { itemOnClick.invoke() }
+                )
             },
         verticalAlignment = Alignment.CenterVertically
     ) {
