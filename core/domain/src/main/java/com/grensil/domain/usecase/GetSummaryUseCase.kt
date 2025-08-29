@@ -4,11 +4,18 @@ import com.grensil.domain.dto.Summary
 import com.grensil.domain.repository.WikipediaRepository
 
 /**
- * Wikipedia 요약 정보 조회 UseCase
+ * Wikipedia 요약 정보 조회 UseCase 인터페이스
  */
-class GetSummaryUseCase(
+interface GetSummaryUseCase {
+    suspend operator fun invoke(searchTerm: String): Summary
+}
+
+/**
+ * Wikipedia 요약 정보 조회 UseCase 구현체
+ */
+class GetSummaryUseCaseImpl(
     private val wikipediaRepository: WikipediaRepository
-) {
+) : GetSummaryUseCase {
 
     /**
      * 검색어로 요약 정보 조회
@@ -17,7 +24,7 @@ class GetSummaryUseCase(
      * @throws IllegalArgumentException 검색어가 유효하지 않은 경우
      * @throws Exception 네트워크 오류 등
      */
-    suspend operator fun invoke(searchTerm: String): Summary {
+    override suspend operator fun invoke(searchTerm: String): Summary {
         // 입력 유효성 검사
         require(searchTerm.isNotBlank()) { "Search term cannot be blank" }
         require(searchTerm.isNotEmpty()) { "Search term must be at least 1 characters" }

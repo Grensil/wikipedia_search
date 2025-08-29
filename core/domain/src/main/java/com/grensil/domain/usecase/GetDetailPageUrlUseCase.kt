@@ -3,11 +3,18 @@ package com.grensil.domain.usecase
 import com.grensil.domain.repository.WikipediaRepository
 
 /**
- * Wikipedia 상세 페이지 URL 생성 UseCase
+ * Wikipedia 상세 페이지 URL 생성 UseCase 인터페이스
  */
-class GetDetailPageUrlUseCase(
+interface GetDetailPageUrlUseCase {
+    operator fun invoke(searchTerm: String): String
+}
+
+/**
+ * Wikipedia 상세 페이지 URL 생성 UseCase 구현체
+ */
+class GetDetailPageUrlUseCaseImpl(
     private val wikipediaRepository: WikipediaRepository
-) {
+) : GetDetailPageUrlUseCase {
 
     /**
      * 검색어로 상세 페이지 URL 생성
@@ -15,7 +22,7 @@ class GetDetailPageUrlUseCase(
      * @return 상세 페이지 URL
      * @throws IllegalArgumentException 검색어가 유효하지 않은 경우
      */
-    operator fun invoke(searchTerm: String): String {
+    override operator fun invoke(searchTerm: String): String {
         // 입력 유효성 검사
         require(searchTerm.isNotBlank()) { "Search term cannot be blank" }
         require(searchTerm.length >= 2) { "Search term must be at least 2 characters" }

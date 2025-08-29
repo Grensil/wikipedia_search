@@ -4,20 +4,27 @@ import com.grensil.domain.dto.MediaItem
 import com.grensil.domain.repository.WikipediaRepository
 
 /**
- * Wikipedia 미디어 목록 조회 UseCase
+ * Wikipedia 미디어 목록 조회 UseCase 인터페이스
  */
-class GetMediaListUseCase(
+interface GetMediaListUseCase {
+    suspend operator fun invoke(searchTerm: String): List<MediaItem>
+}
+
+/**
+ * Wikipedia 미디어 목록 조회 UseCase 구현체
+ */
+class GetMediaListUseCaseImpl(
     private val wikipediaRepository: WikipediaRepository
-) {
+) : GetMediaListUseCase {
 
     /**
      * 검색어로 미디어 목록 조회
      * @param searchTerm 검색할 키워드
      * @return 유효한 MediaItem 목록 (필터링 적용)
      * @throws IllegalArgumentException 검색어가 유효하지 않은 경우
-     * @throws Exception 네트워크 오류 등
+     * @throws Exception 네트워크 오료 등
      */
-    suspend operator fun invoke(searchTerm: String): List<MediaItem> {
+    override suspend operator fun invoke(searchTerm: String): List<MediaItem> {
         // 입력 유효성 검사
         require(searchTerm.isNotBlank()) { "Search term cannot be blank" }
         require(searchTerm.isNotEmpty()) { "Search term must be at least 1 characters" }

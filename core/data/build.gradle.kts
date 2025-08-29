@@ -43,5 +43,6 @@ dependencies {
     
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    implementation(libs.kotlinx.coroutines.core.v190)
 }

@@ -56,6 +56,8 @@ dependencies {
     // Preview 기능 (선택)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.androidx.ui.test.junit4)
+    implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.ui.tooling)
 
     // Activity + Compose 통합
@@ -65,4 +67,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.junit.ktx.v115)
+    androidTestImplementation(libs.ui.test.manifest)
 }
