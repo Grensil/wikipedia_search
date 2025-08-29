@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -57,10 +56,10 @@ fun MainNavGraph(navController: NavHostController) {
     val context = LocalContext.current
     val appModules = (context.applicationContext as NhnApplication).getWikipediaModule()
 
-    val owner = LocalViewModelStoreOwner.current
     NavHost(
         navController = navController, startDestination = Routes.SEARCH
     ) {
+        // 초기 검색 화면 (검색어 없음)
         composable(route = Routes.SEARCH,
             enterTransition = {
                 slideInHorizontally(
@@ -87,18 +86,59 @@ fun MainNavGraph(navController: NavHostController) {
                 )
             }) { backStackEntry ->
 
-            val searchViewModel = owner?.let {
-                ViewModelProvider(
-                    it, SearchViewModelFactory(
-                        appModules.getSummaryUseCase(),
-                        appModules.getMediaListUseCase()
-                    )
-                ).get(SearchViewModel::class.java)
-            }
+            val searchViewModel = ViewModelProvider(
+                backStackEntry, SearchViewModelFactory(
+                    appModules.getSummaryUseCase(),
+                    appModules.getMediaListUseCase(),
+                    null // 초기 화면은 검색어 없음
+                )
+            ).get(SearchViewModel::class.java)
 
-            searchViewModel?.let {
-                SearchScreen(viewModel = it, navController = navController)
-            }
+            SearchScreen(viewModel = searchViewModel, navController = navController)
+        }
+
+        // 검색어가 있는 검색 화면 (새로운 검색)
+        composable(route = Routes.SEARCH_TEMPLATE,
+            arguments = listOf(
+                navArgument("searchQuery") { type = NavType.StringType },
+            ),
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = tween(300)
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { -it },
+                    animationSpec = tween(300)
+                )
+            },
+            popEnterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { -it },
+                    animationSpec = tween(300)
+                )
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(300)
+                )
+            }) { backStackEntry ->
+
+            val encodedKeyword = backStackEntry.arguments?.getString("searchQuery")
+            val keyword = Routes.extractSearchQuery(encodedKeyword)
+            
+            val searchViewModel = ViewModelProvider(
+                backStackEntry, SearchViewModelFactory(
+                    appModules.getSummaryUseCase(),
+                    appModules.getMediaListUseCase(),
+                    keyword // 초기 검색어를 ViewModel에 전달
+                )
+            ).get(SearchViewModel::class.java)
+            
+            SearchScreen(viewModel = searchViewModel, navController = navController)
         }
         composable(route = Routes.DETAIL_TEMPLATE,
             arguments = listOf(
@@ -129,19 +169,15 @@ fun MainNavGraph(navController: NavHostController) {
                 )
             }) { backStackEntry ->
 
-            val detailViewModel = owner?.let {
-                ViewModelProvider(
-                    it, DetailViewModelFactory(
-                        appModules.getDetailPageUrlUseCase()
-                    )
-                ).get(DetailViewModel::class.java)
-            }
+            val detailViewModel = ViewModelProvider(
+                backStackEntry, DetailViewModelFactory(
+                    appModules.getDetailPageUrlUseCase()
+                )
+            ).get(DetailViewModel::class.java)
 
             val encodedKeyword = backStackEntry.arguments?.getString("searchQuery")
-            val keyword = Routes.Detail.extractSearchQuery(encodedKeyword)
-            detailViewModel?.let {
-                DetailScreen(viewModel = it, navController = navController, keyword = keyword)
-            }
+            val keyword = Routes.extractSearchQuery(encodedKeyword)
+            DetailScreen(viewModel = detailViewModel, navController = navController, keyword = keyword)
         }
     }
 }

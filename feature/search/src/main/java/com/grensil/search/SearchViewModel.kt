@@ -22,7 +22,8 @@ import kotlinx.coroutines.flow.onEach
 @OptIn(FlowPreview::class)
 class SearchViewModel(
     private val getSummaryUseCase: GetSummaryUseCase,
-    private val getMediaListUseCase: GetMediaListUseCase
+    private val getMediaListUseCase: GetMediaListUseCase,
+    private val initialSearchQuery: String? = null
 ) : ViewModel() {
 
     private var searchJob: Job? = null // 키워드 추출 및 즉시 검색용
@@ -31,6 +32,11 @@ class SearchViewModel(
     val searchQuery = _searchQuery.asStateFlow()
     
     init {
+        // 초기 검색어가 있으면 설정 및 검색 실행
+        initialSearchQuery?.let { query ->
+            _searchQuery.value = query
+        }
+        
         // 디바운싱된 검색 처리
         searchQuery
             .debounce(300) // 300ms 디바운싱
@@ -54,6 +60,10 @@ class SearchViewModel(
 
     fun search(keyword: String) {
         updateSearchQuery(keyword)
+    }
+
+    fun updateSearchQuery(keyword: String) {
+        _searchQuery.value = keyword
     }
     
     private fun performSearch(keyword: String) {
@@ -114,10 +124,6 @@ class SearchViewModel(
         }
     }
 
-    fun updateSearchQuery(keyword: String) {
-        _searchQuery.value = keyword
-    }
-    
     fun refreshSearch(keyword: String) {
         searchJob?.cancel()
         

@@ -304,7 +304,11 @@ fun SearchSuccessContent(
                 MediaItemView(
                     mediaItem = mediaList[index],
                     itemOnClick = {
-                        viewModel.search(keyword = mediaList[index].extractedKeywords?: "")
+                        val keyword = mediaList[index].extractedKeywords ?: ""
+                        if (keyword.isNotBlank()) {
+                            val route = Routes.Search.createRoute(keyword)
+                            navController.navigate(route)
+                        }
                     }
                 )
             }
@@ -418,7 +422,11 @@ fun SearchPartialSuccessContent(
                     MediaItemView(
                         mediaItem = mediaList[index],
                         itemOnClick = {
-                            viewModel.search(keyword = mediaList[index].extractedKeywords?: "")
+                            val keyword = mediaList[index].extractedKeywords ?: ""
+                            if (keyword.isNotBlank()) {
+                                val route = Routes.Search.createRoute(keyword)
+                                navController.navigate(route)
+                            }
                         }
                     )
                 }
