@@ -166,17 +166,6 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
                         )
                     }
 
-                    is SearchUiState.PartialSuccess -> {
-                        val data = searchedData as SearchUiState.PartialSuccess
-                        SearchPartialSuccessContent(
-                            partialData = data,
-                            searchQuery = searchQuery,
-                            listState = listState,
-                            navController = navController,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
                     is SearchUiState.Error -> {
                         val data = searchedData as SearchUiState.Error
                         Text(
@@ -281,118 +270,6 @@ fun SearchSuccessContent(
                             navController.navigate(route)
                         }
                     })
-            }
-        }
-    }
-}
-
-@Composable
-fun SearchPartialSuccessContent(
-    partialData: SearchUiState.PartialSuccess,
-    searchQuery: String,
-    listState: LazyListState,
-    navController: NavHostController,
-    modifier: Modifier = Modifier
-) {
-
-    Column(
-        modifier = modifier.fillMaxSize()
-    ) {
-        val summary = partialData.summary
-        val mediaList = partialData.mediaList
-
-        if (mediaList.isNotEmpty()) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(top = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .padding(16.dp)
-                            .clickable {
-                                try {
-                                    val route = Routes.Detail.createRoute(searchQuery)
-                                    navController.navigate(route)
-                                } catch (e: Exception) {
-                                    Log.e("SearchScreen", "Navigation failed: ${e.message}")
-                                }
-                            }, verticalArrangement = Arrangement.Top
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            CachedImage(
-                                url = summary.thumbnailUrl, modifier = Modifier
-                                    .width(120.dp)
-                                    .height(80.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            modifier = Modifier.wrapContentSize(),
-                            text = summary.title,
-                            textAlign = TextAlign.Start,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        Text(
-                            modifier = Modifier.wrapContentSize(),
-                            text = summary.extract,
-                            textAlign = TextAlign.Start,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                }
-
-                items(
-                    count = mediaList.size, key = { index ->
-                        "${mediaList[index].title}_${mediaList[index].caption}_${index}"
-                    }) { index ->
-                    MediaItemView(
-                        mediaItem = mediaList[index], itemOnClick = {
-                            val keyword = mediaList[index].extractedKeywords ?: ""
-                            if (keyword.isNotBlank()) {
-                                val route = Routes.Search.createRoute(keyword)
-                                navController.navigate(route)
-                            }
-                        })
-                }
-            }
-        } else {
-            // MediaList 로딩 중 인디케이터 표시
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(40.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "미디어 로딩 중...", style = MaterialTheme.typography.bodyMedium
-                )
             }
         }
     }

@@ -1,131 +1,102 @@
 package com.grensil.search
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grensil.domain.dto.MediaItem
 import com.grensil.domain.dto.Summary
 import com.grensil.domain.usecase.GetMediaListUseCase
 import com.grensil.domain.usecase.GetSummaryUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class SearchViewModel(
     private val getSummaryUseCase: GetSummaryUseCase,
     private val getMediaListUseCase: GetMediaListUseCase,
     private val initialSearchQuery: String? = null
 ) : ViewModel() {
 
-    private var searchJob: Job? = null // 키워드 추출 및 즉시 검색용
+    private val _searchQuery = MutableStateFlow(initialSearchQuery ?: "")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery = _searchQuery.asStateFlow()
+    private val _searchedData = MutableStateFlow<SearchUiState>(SearchUiState.Idle)
+    val searchedData: StateFlow<SearchUiState> = _searchedData.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     private val _scrollToTopEvent = MutableSharedFlow<Unit>()
     val scrollToTopEvent = _scrollToTopEvent.asSharedFlow()
 
     init {
-        // 초기 검색어가 있으면 설정 및 검색 실행
-        initialSearchQuery?.let { query ->
-            _searchQuery.value = query
-        }
-
-        // 디바운싱된 검색 처리 (더 긴 지연시간)
-        searchQuery
+        // 검색어 변경 시 자동 검색 & 이전 검색 취소
+        _searchQuery
             .debounce(300)
             .distinctUntilChanged()
-            .onEach { keyword ->
-                performSearch(keyword)
+            .flatMapLatest { keyword ->
+                emitScrollToTop(keyword)
+                performSearchFlow(keyword)
+            }
+            .onEach { result ->
+                _searchedData.value = result
             }
             .launchIn(viewModelScope)
     }
 
-    // 통합된 상태 관리
-    private val _searchedData = MutableStateFlow<SearchUiState>(SearchUiState.Idle)
-    val searchedData: StateFlow<SearchUiState> = _searchedData.asStateFlow()
-
-    // Pull to Refresh 상태 관리
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
-
-    private val _extractedKeyword = MutableStateFlow<ExtractorUiState>(ExtractorUiState.Idle)
-    val extractedKeyword: StateFlow<ExtractorUiState> = _extractedKeyword
+    private fun emitScrollToTop(keyword: String): Flow<Unit> = flow {
+        emit(_scrollToTopEvent.emit(Unit))
+    }
 
     fun search(keyword: String) {
-        updateSearchQuery(keyword)
+        _searchQuery.value = keyword
     }
 
-    fun updateSearchQuery(keyword: String) {
-        val previousQuery = _searchQuery.value
-        if (keyword != previousQuery) {
-            _searchQuery.value = keyword
-            viewModelScope.launch {
-                _scrollToTopEvent.emit(Unit)
-            }
-        }
-    }
-
-    private fun performSearch(keyword: String) {
-        // Handle blank or whitespace-only queries
-        if (keyword.isBlank()) {
-            _searchedData.value = SearchUiState.Idle
-            return
-        }
-
-        // Flow가 자동으로 취소 처리하므로 searchJob 불필요
+    fun refreshSearch(keyword: String) {
+        _isRefreshing.value = true
         viewModelScope.launch {
-            _searchedData.value = SearchUiState.Loading
-
             try {
-                // Summary 먼저 로드
-                Log.d("SearchViewModel", "Starting summary search for: $keyword")
                 val summary = getSummaryUseCase(keyword)
-                Log.d("SearchViewModel", "Summary received: ${summary.title}")
-
-                // 현재 상태에서 기존 mediaList 가져오기 (깜빡임 방지)
-                val currentState = _searchedData.value
-                val currentMediaList = when (currentState) {
-                    is SearchUiState.PartialSuccess -> currentState.mediaList
-                    is SearchUiState.Success -> currentState.mediaList
-                    else -> emptyList()
-                }
-
-                // Summary와 기존 MediaList로 먼저 업데이트 (깜빡임 방지)
-                _searchedData.value = SearchUiState.PartialSuccess(
-                    summary = summary,
-                    mediaList = currentMediaList
-                )
-
-                // MediaList 로드
-                Log.d("SearchViewModel", "Starting media list search for: $keyword")
-                val newMediaList = getMediaListUseCase(keyword)
-                Log.d("SearchViewModel", "MediaList received: ${newMediaList.size} items")
-
-                // 둘 다 완료된 상태로 업데이트
-                _searchedData.value = SearchUiState.Success(
-                    summary = summary,
-                    mediaList = newMediaList
-                )
-
+                val mediaList = getMediaListUseCase(keyword)
+                _searchedData.value = SearchUiState.Success(summary, mediaList)
             } catch (e: Exception) {
-                Log.e("SearchViewModel", "Search error for '$keyword': ${e.message}", e)
-                val errorMessage = getErrorMessage(e, keyword)
-                _searchedData.value = SearchUiState.Error(errorMessage)
+                _searchedData.value = SearchUiState.Error(getErrorMessage(e, keyword))
+            } finally {
+                _isRefreshing.value = false
             }
         }
     }
 
+    private fun performSearchFlow(keyword: String): Flow<SearchUiState> = flow {
+        if (keyword.isBlank()) {
+            emit(SearchUiState.Idle)
+            return@flow
+        }
+
+        emit(SearchUiState.Loading)
+
+        val summary = getSummaryUseCase(keyword)
+        val mediaList = getMediaListUseCase(keyword)
+
+        emit(SearchUiState.Success(summary, mediaList))
+
+    }.catch { throwable ->
+        val e = throwable as? Exception ?: Exception(throwable)
+        emit(SearchUiState.Error(getErrorMessage(e, keyword)))
+    }
 
     private fun getErrorMessage(e: Exception, keyword: String): String {
         return when {
@@ -145,71 +116,12 @@ class SearchViewModel(
                 e.message ?: "알 수 없는 오류가 발생했습니다"
         }
     }
-
-    fun refreshSearch(keyword: String) {
-        searchJob?.cancel()
-
-        _isRefreshing.value = true
-
-        searchJob = viewModelScope.launch {
-            try {
-                // Summary 먼저 로드
-                val summary = getSummaryUseCase(keyword)
-
-                // 현재 상태를 가져와서 비교
-                val currentState = _searchedData.value
-                val currentMediaList = when (currentState) {
-                    is SearchUiState.PartialSuccess -> currentState.mediaList
-                    is SearchUiState.Success -> currentState.mediaList
-                    else -> emptyList()
-                }
-
-                // Summary만 있는 상태로 업데이트 (기존 mediaList 유지)
-                _searchedData.value = SearchUiState.PartialSuccess(
-                    summary = summary,
-                    mediaList = currentMediaList
-                )
-
-                // MediaList 로드
-                val newMediaList = getMediaListUseCase(keyword)
-
-                // 리스트가 변경된 경우에만 업데이트
-                if (newMediaList != currentMediaList) {
-                    _searchedData.value = SearchUiState.Success(
-                        summary = summary,
-                        mediaList = newMediaList
-                    )
-                } else {
-                    // 데이터가 같으면 summary만 업데이트
-                    _searchedData.value = SearchUiState.Success(
-                        summary = summary,
-                        mediaList = currentMediaList
-                    )
-                }
-
-            } catch (e: Exception) {
-                Log.e("SearchViewModel", "Refresh search error for '$keyword': ${e.message}", e)
-                val errorMessage = getErrorMessage(e, keyword)
-                _searchedData.value = SearchUiState.Error(errorMessage)
-            } finally {
-                _isRefreshing.value = false
-            }
-        }
-    }
 }
 
+// UI 상태 정의
 sealed interface SearchUiState {
     object Idle : SearchUiState
     object Loading : SearchUiState
-    data class PartialSuccess(val summary: Summary, val mediaList: List<MediaItem>) : SearchUiState
     data class Success(val summary: Summary, val mediaList: List<MediaItem>) : SearchUiState
     data class Error(val message: String) : SearchUiState
-}
-
-/** 키워드 추출 상태 */
-sealed interface ExtractorUiState {
-    object Idle : ExtractorUiState
-    object Loading : ExtractorUiState
-    data class Success(val keywords: List<String>) : ExtractorUiState
-    data class Error(val message: String) : ExtractorUiState
 }
