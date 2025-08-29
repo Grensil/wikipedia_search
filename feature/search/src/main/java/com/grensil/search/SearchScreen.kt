@@ -66,20 +66,17 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
     val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     val listState = rememberLazyListState()
+
     val pullToRefreshState = rememberPullToRefreshState()
     val focusManager = LocalFocusManager.current
 
     var isProgrammaticScroll by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(searchedData) {
-        when (searchedData) {
-            is SearchUiState.Success -> {
-                isProgrammaticScroll = true
-                listState.animateScrollToItem(0)
-                isProgrammaticScroll = false
-            }
-
-            else -> {}
+    LaunchedEffect(Unit) {
+        viewModel.scrollToTopEvent.collect {
+            isProgrammaticScroll = true
+            listState.animateScrollToItem(0)
+            isProgrammaticScroll = false
         }
     }
 
@@ -301,58 +298,9 @@ fun SearchPartialSuccessContent(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // Summary 섹션 (항상 있음)
         val summary = partialData.summary
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(16.dp)
-                .clickable {
-                    try {
-                        val route = Routes.Detail.createRoute(searchQuery)
-                        navController.navigate(route)
-                    } catch (e: Exception) {
-                        Log.e("SearchScreen", "Navigation failed: ${e.message}")
-                    }
-                }, verticalArrangement = Arrangement.Top
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                CachedImage(
-                    url = summary.thumbnailUrl, modifier = Modifier
-                        .width(120.dp)
-                        .height(80.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                modifier = Modifier.wrapContentSize(),
-                text = summary.title,
-                textAlign = TextAlign.Start,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Text(
-                modifier = Modifier.wrapContentSize(),
-                text = summary.extract,
-                textAlign = TextAlign.Start,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        // MediaList 섹션 - 비어있을 때는 로딩 인디케이터 표시
         val mediaList = partialData.mediaList
+
         if (mediaList.isNotEmpty()) {
             LazyColumn(
                 state = listState,
@@ -362,6 +310,58 @@ fun SearchPartialSuccessContent(
                 contentPadding = PaddingValues(top = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
+
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(16.dp)
+                            .clickable {
+                                try {
+                                    val route = Routes.Detail.createRoute(searchQuery)
+                                    navController.navigate(route)
+                                } catch (e: Exception) {
+                                    Log.e("SearchScreen", "Navigation failed: ${e.message}")
+                                }
+                            }, verticalArrangement = Arrangement.Top
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            CachedImage(
+                                url = summary.thumbnailUrl, modifier = Modifier
+                                    .width(120.dp)
+                                    .height(80.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            modifier = Modifier.wrapContentSize(),
+                            text = summary.title,
+                            textAlign = TextAlign.Start,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Text(
+                            modifier = Modifier.wrapContentSize(),
+                            text = summary.extract,
+                            textAlign = TextAlign.Start,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                }
+
                 items(
                     count = mediaList.size, key = { index ->
                         "${mediaList[index].title}_${mediaList[index].caption}_${index}"

@@ -1,5 +1,6 @@
 package com.grensil.network
 
+import android.util.Log
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -132,11 +133,17 @@ class HttpClient {
         } catch (e: SSLException) {
             throw NhnNetworkException.SSLExceptionNhn("SSL connection failed: ${request.url}", e)
         } catch (e: MalformedURLException) {
-            throw NhnNetworkException.InvalidUrlExceptionNhn("Invalid URL format: ${request.url}", e)
+            throw NhnNetworkException.InvalidUrlExceptionNhn(
+                "Invalid URL format: ${request.url}",
+                e
+            )
         } catch (e: NhnNetworkException) {
             throw e // 이미 우리 예외는 그대로 전파
         } catch (e: Exception) {
-            throw NhnNetworkException.ConnectionExceptionNhn("Unexpected network error: ${e.message}", e)
+            throw NhnNetworkException.ConnectionExceptionNhn(
+                "Unexpected network error: ${e.message}",
+                e
+            )
         } finally {
             connection?.disconnect()
         }
@@ -201,7 +208,8 @@ class HttpClient {
         // Content-Type 기본 설정 (POST, PUT에서 body가 있고 사용자가 설정하지 않은 경우)
         if (request.method in listOf(HttpMethod.POST, HttpMethod.PUT) &&
             request.body != null &&
-            !request.hasContentType()) {
+            !request.hasContentType()
+        ) {
             setRequestProperty("Content-Type", "application/json; charset=UTF-8")
         }
 
@@ -237,6 +245,10 @@ class HttpClient {
 
         // Response Body 읽기
         val responseBody = readResponseBody(connection, statusCode)
+
+        Log.d("HttpClient", "Response Code: $statusCode")
+        Log.d("HttpClient", "Response Headers: $headers")
+        Log.d("HttpClient", "Response Body: $responseBody")
 
         // HTTP 에러 상태 체크 및 예외 발생
         if (statusCode >= 400) {
