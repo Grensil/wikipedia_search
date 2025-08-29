@@ -1,6 +1,7 @@
 package com.grensil.detail
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
@@ -30,7 +31,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
-import com.grensil.navigation.Routes
 
 @Composable
 fun DetailScreen(
@@ -51,7 +51,7 @@ fun DetailScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            
+
             // 고정 헤더 - 스크롤에 영향받지 않음
             Box(
                 modifier = Modifier
@@ -64,28 +64,29 @@ fun DetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
-                        onClick = { 
+                        onClick = {
                             val previousEntry = navController.previousBackStackEntry
-                            android.util.Log.d("DetailScreen", "Previous entry exists: ${previousEntry != null}")
-                            android.util.Log.d("DetailScreen", "Previous route: ${previousEntry?.destination?.route}")
-                            
+                            Log.d("DetailScreen", "Previous entry exists: ${previousEntry != null}")
+                            Log.d(
+                                "DetailScreen",
+                                "Previous route: ${previousEntry?.destination?.route}"
+                            )
+
                             if (previousEntry != null) {
-                                android.util.Log.d("DetailScreen", "Popping back stack")
+                                Log.d("DetailScreen", "Popping back stack")
                                 navController.popBackStack()
                             } else {
-                                android.util.Log.d("DetailScreen", "No previous entry, navigating to search")
-                                navController.navigate(Routes.SEARCH_TEMPLATE) {
-                                    popUpTo(0) { inclusive = true }
-                                }
+                                Log.d(
+                                    "DetailScreen", "No previous entry, navigating to search"
+                                )
                             }
-                        }
-                    ) {
+                        }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "뒤로 가기"
                         )
                     }
-                    
+
                     Text(
                         text = keyword ?: "",
                         style = MaterialTheme.typography.titleMedium,
@@ -94,16 +95,16 @@ fun DetailScreen(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    
+
                     // 오른쪽 공간을 위한 Spacer
                     Spacer(modifier = Modifier.size(48.dp))
                 }
             }
-            
+
             // 컨텐츠 영역
             Box(modifier = Modifier.fillMaxSize()) {
                 when (uiState) {
-                    is DetailUiState.Idle -> { 
+                    is DetailUiState.Idle -> {
                         CircularProgressIndicator(
                             modifier = Modifier
                                 .padding(16.dp)
@@ -111,6 +112,7 @@ fun DetailScreen(
                                 .align(Alignment.Center)
                         )
                     }
+
                     is DetailUiState.Loading -> {
                         CircularProgressIndicator(
                             modifier = Modifier
@@ -149,17 +151,15 @@ fun WebPage(url: String) {
     ) {
         AndroidView(
             factory = { context ->
-                WebView(context).apply {
-                    settings.javaScriptEnabled = true
-                    webViewClient = WebViewClient()
-                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                    loadUrl(url)
-                }
-            }, 
-            update = { webView ->
-                webView.loadUrl(url)
-            }, 
-            modifier = Modifier.fillMaxSize()
+            WebView(context).apply {
+                settings.javaScriptEnabled = true
+                webViewClient = WebViewClient()
+                setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                loadUrl(url)
+            }
+        }, update = { webView ->
+            webView.loadUrl(url)
+        }, modifier = Modifier.fillMaxSize()
         )
     }
 }

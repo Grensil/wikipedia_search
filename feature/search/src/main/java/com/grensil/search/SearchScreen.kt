@@ -3,7 +3,6 @@ package com.grensil.search
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +31,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -41,13 +39,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -61,7 +56,6 @@ import com.grensil.domain.dto.Summary
 import com.grensil.navigation.Routes
 import com.grensil.ui.component.CachedImage
 import com.grensil.ui.component.DismissKeyboardOnTouch
-import kotlinx.coroutines.launch
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -111,8 +105,7 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
                 .background(MaterialTheme.colorScheme.background)
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             ) {
                 Spacer(
                     modifier = Modifier
@@ -127,7 +120,23 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
                 ) {
                     SearchTextField(
                         query = searchQuery, onQueryChange = viewModel::search, onBackClick = {
-                            navController.popBackStack()
+                            val previousEntry = navController.previousBackStackEntry
+                            Log.d(
+                                "SearchScreen", "Previous entry exists: ${previousEntry != null}"
+                            )
+                            Log.d(
+                                "SearchScreen",
+                                "Previous route: ${previousEntry?.destination?.route}"
+                            )
+
+                            if (previousEntry != null) {
+                                Log.d("SearchScreen", "Popping back stack")
+                                navController.popBackStack()
+                            } else {
+                                Log.d(
+                                    "SearchScreen", "No previous entry, navigating to search"
+                                )
+                            }
                         }, modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -231,7 +240,8 @@ fun SearchSuccessContent(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         CachedImage(
-                            url = summary.thumbnailUrl, modifier = Modifier
+                            url = summary.thumbnailUrl,
+                            modifier = Modifier
                                 .width(120.dp)
                                 .height(80.dp)
                         )
@@ -297,7 +307,8 @@ fun SearchPartialSuccessContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(16.dp).clickable {
+                .padding(16.dp)
+                .clickable {
                     try {
                         val route = Routes.Detail.createRoute(searchQuery)
                         navController.navigate(route)
