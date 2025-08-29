@@ -48,7 +48,6 @@ class GetMediaListUseCase(
 
     /**
      * Caption에서 의미있는 키워드 3개 추출 (비즈니스 로직)
-     * - 2글자 이상 단어만 선택
      * - 특수문자 제거 후 알파벳/숫자만 보존
      * - 최대 3개 키워드 추출
      * - 빈 결과는 null 반환
@@ -59,7 +58,7 @@ class GetMediaListUseCase(
         val keywords = caption
             .split("\\s+".toRegex()) // 공백으로 분할
             .map { it.replace("[^a-zA-Z0-9가-힣]".toRegex(), "") } // 특수문자 제거
-            .filter { it.length > 2 } // 2글자 초과만
+            .filter { it.isNotBlank() } // 빈 문자열 제거
             .take(3) // 최대 3개
         
         return keywords.takeIf { it.isNotEmpty() }?.joinToString(" ")
