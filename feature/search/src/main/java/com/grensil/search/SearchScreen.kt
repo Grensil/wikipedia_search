@@ -199,58 +199,6 @@ fun SearchSuccessContent(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(16.dp)
-                .clickable {
-                    try {
-                        val route = Routes.Detail.createRoute(searchQuery)
-                        navController.navigate(route)
-                    } catch (e: Exception) {
-                        Log.e("SearchScreen", "Navigation failed: ${e.message}")
-                    }
-                }, verticalArrangement = Arrangement.Top
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                CachedImage(
-                    url = summary.thumbnailUrl, modifier = Modifier
-                        .width(120.dp)
-                        .height(80.dp)
-                )
-            }
-
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-            )
-
-            Text(
-                modifier = Modifier.wrapContentSize(),
-                text = summary.title,
-                textAlign = TextAlign.Start,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Text(
-                modifier = Modifier.wrapContentSize(),
-                text = summary.extract,
-                textAlign = TextAlign.Start,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -259,6 +207,61 @@ fun SearchSuccessContent(
             contentPadding = PaddingValues(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(16.dp)
+                        .clickable {
+                            try {
+                                val route = Routes.Detail.createRoute(searchQuery)
+                                navController.navigate(route)
+                            } catch (e: Exception) {
+                                Log.e("SearchScreen", "Navigation failed: ${e.message}")
+                            }
+                        }, verticalArrangement = Arrangement.Top
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CachedImage(
+                            url = summary.thumbnailUrl, modifier = Modifier
+                                .width(120.dp)
+                                .height(80.dp)
+                        )
+                    }
+
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(16.dp)
+                    )
+
+                    Text(
+                        modifier = Modifier.wrapContentSize(),
+                        text = summary.title,
+                        textAlign = TextAlign.Start,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Text(
+                        modifier = Modifier.wrapContentSize(),
+                        text = summary.extract,
+                        textAlign = TextAlign.Start,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
             items(
                 count = mediaList.size, key = { index ->
                     "${mediaList[index].title}_${mediaList[index].caption}_${index}"
