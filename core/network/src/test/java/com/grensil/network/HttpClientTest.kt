@@ -4,40 +4,79 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
+/**
+ * HttpClient 테스트 클래스
+ * 
+ * 테스트 목적:
+ * 1. 과제 1단계: HttpURLConnection 기반 통신 모듈 테스트
+ * 2. HTTP 요청/응답 데이터 클래스 동작 검증
+ * 3. 예외 처리 및 응답 유틸리티 메소드 검증
+ * 
+ * 사용 기술: Android API + JUnit 4만 사용 (외부 라이브러리 없음)
+ * 주의사항: 실제 네트워크 호출은 통합 테스트에서 처리
+ */
 class HttpClientTest {
 
+    // 테스트 대상 HttpClient 인스턴스
     private lateinit var httpClient: HttpClient
 
+    /**
+     * 각 테스트 실행 전 초기화
+     * - HttpClient 인스턴스 생성
+     */
     @Before
     fun setup() {
         httpClient = HttpClient()
     }
 
+    /**
+     * 📦 데이터 클래스 테스트: HttpResponse 기본 동작 검증
+     * 
+     * 테스트 시나리오:
+     * 1. HTTP 응답 객체를 생성
+     * 2. 모든 속성값이 올바르게 설정되는지 확인
+     * 3. 성공 응답(200)에 대해 isSuccessful이 true인지 확인
+     * 
+     * 검증 항목: statusCode, headers, body, isSuccessful 속성
+     */
     @Test
     fun `HttpResponse data class works correctly`() {
-        // Given
+        // Given: HTTP 응답 데이터 준비
         val headers = mapOf("Accept" to "application/json")
         
-        // When
+        // When: HttpResponse 객체 생성
         val response = HttpResponse(
             statusCode = 200,
             headers = headers,
             body = "test response"
         )
 
-        // Then
-        assertEquals(200, response.statusCode)
-        assertEquals(headers, response.headers)
-        assertEquals("test response", response.body)
-        assertTrue(response.isSuccessful)
+        // Then: 모든 속성이 올바르게 설정되었는지 검증
+        assertEquals("상태 코드가 올바르게 설정되어야 함", 200, response.statusCode)
+        assertEquals("헤더가 올바르게 설정되어야 함", headers, response.headers)
+        assertEquals("응답 본문이 올바르게 설정되어야 함", "test response", response.body)
+        assertTrue("200 상태 코드는 성공으로 판단되어야 함", response.isSuccessful)
     }
 
+    /**
+     * ✅ 성공 응답 테스트: 2xx 상태 코드에 대한 isSuccessful 검증
+     * 
+     * 테스트 시나리오:
+     * 1. HTTP 2xx 범위의 다양한 상태 코드 테스트
+     * 2. 모든 2xx 코드에서 isSuccessful이 true 반환하는지 확인
+     * 
+     * 테스트 상태 코드:
+     * - 200 OK (일반 성공)
+     * - 201 Created (생성 성공)
+     * - 204 No Content (본문 없는 성공)
+     * - 299 Custom Success (2xx 범위 마지막)
+     */
     @Test
     fun `HttpResponse isSuccessful returns true for 2xx codes`() {
-        assertTrue(HttpResponse(200, emptyMap(), "OK").isSuccessful)
-        assertTrue(HttpResponse(201, emptyMap(), "Created").isSuccessful)
-        assertTrue(HttpResponse(204, emptyMap(), "No Content").isSuccessful)
-        assertTrue(HttpResponse(299, emptyMap(), "Custom Success").isSuccessful)
+        assertTrue("200 OK는 성공", HttpResponse(200, emptyMap(), "OK").isSuccessful)
+        assertTrue("201 Created는 성공", HttpResponse(201, emptyMap(), "Created").isSuccessful)
+        assertTrue("204 No Content는 성공", HttpResponse(204, emptyMap(), "No Content").isSuccessful)
+        assertTrue("299는 2xx 범위로 성공", HttpResponse(299, emptyMap(), "Custom Success").isSuccessful)
     }
 
     @Test
