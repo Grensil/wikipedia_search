@@ -6,13 +6,14 @@ import com.grensil.nhn_gmail.di.AppModule
 
 class NhnApplication : Application() {
 
-    private lateinit var wikipediaModule: AppModule
+    private val appModule: AppModule by lazy {
+        AppModule.getInstance(HttpClient())
+    }
 
     override fun onCreate() {
         super.onCreate()
-        val httpClient = HttpClient()
-        wikipediaModule = AppModule(httpClient)
+        // AppModule은 lazy로 초기화되므로 별도 초기화 불필요
     }
 
-    fun getWikipediaModule(): AppModule = wikipediaModule
+    fun getWikipediaModule(): AppModule = appModule
 }

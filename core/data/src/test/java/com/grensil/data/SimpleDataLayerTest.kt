@@ -106,6 +106,7 @@ class SimpleDataLayerTest {
         val mediaItem = MediaItem(
             title = "Test Image",
             caption = "Test image caption",
+            extractedKeywords = null,
             imageUrl = "https://example.com/image.jpg",
             type = "image"
         )
@@ -120,15 +121,15 @@ class SimpleDataLayerTest {
     @Test
     fun `MediaItem hasImage works correctly`() {
         // With image
-        val mediaWithImage = MediaItem("Title", "Caption", "https://example.com/image.jpg")
+        val mediaWithImage = MediaItem("Title", "Caption", null, "https://example.com/image.jpg")
         assertTrue(mediaWithImage.hasImage())
 
         // Without image
-        val mediaWithoutImage = MediaItem("Title", "Caption", null)
+        val mediaWithoutImage = MediaItem("Title", "Caption", null, null)
         assertFalse(mediaWithoutImage.hasImage())
 
         // Empty image URL
-        val mediaEmptyImage = MediaItem("Title", "Caption", "")
+        val mediaEmptyImage = MediaItem("Title", "Caption", null, "")
         assertFalse(mediaEmptyImage.hasImage())
     }
 
@@ -146,19 +147,19 @@ class SimpleDataLayerTest {
     @Test
     fun `MediaItem isImage works correctly`() {
         // Image type
-        val imageItem = MediaItem("Title", "Caption", "url", "image")
+        val imageItem = MediaItem("Title", "Caption", null, "url", "image")
         assertTrue(imageItem.isImage())
 
         // Bitmap type
-        val bitmapItem = MediaItem("Title", "Caption", "url", "bitmap")
+        val bitmapItem = MediaItem("Title", "Caption", null, "url", "bitmap")
         assertTrue(bitmapItem.isImage())
 
         // Video type
-        val videoItem = MediaItem("Title", "Caption", "url", "video")
+        val videoItem = MediaItem("Title", "Caption", null, "url", "video")
         assertFalse(videoItem.isImage())
 
         // Unknown type
-        val unknownItem = MediaItem("Title", "Caption", "url", "unknown")
+        val unknownItem = MediaItem("Title", "Caption", null, "url", "unknown")
         assertFalse(unknownItem.isImage())
     }
 

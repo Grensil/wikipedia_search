@@ -21,11 +21,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.grensil.detail.DetailScreen
 import com.grensil.detail.DetailViewModel
-import com.grensil.detail.DetailViewModelFactory
 import com.grensil.search.SearchScreen
 import com.grensil.search.SearchViewModel
-import com.grensil.search.SearchViewModelFactory
 import com.grensil.navigation.Routes
+import com.grensil.nhn_gmail.di.createViewModelFactory
 
 @Composable
 fun MainScreen() {
@@ -98,12 +97,15 @@ fun MainNavGraph(navController: NavHostController) {
             val keyword = Routes.extractSearchQuery(encodedKeyword)
             
             val searchViewModel = ViewModelProvider(
-                backStackEntry, SearchViewModelFactory(
-                    appModules.getSummaryUseCase(),
-                    appModules.getMediaListUseCase(),
-                    keyword // 파라미터가 있으면 해당 키워드로 검색, 없으면 null
-                )
-            ).get(SearchViewModel::class.java)
+                backStackEntry, 
+                createViewModelFactory {
+                    SearchViewModel(
+                        appModules.getSummaryUseCase(),
+                        appModules.getMediaListUseCase(),
+                        keyword // 파라미터가 있으면 해당 키워드로 검색, 없으면 null
+                    )
+                }
+            )[SearchViewModel::class.java]
             
             SearchScreen(viewModel = searchViewModel, navController = navController)
         }
@@ -137,10 +139,11 @@ fun MainNavGraph(navController: NavHostController) {
             }) { backStackEntry ->
 
             val detailViewModel = ViewModelProvider(
-                backStackEntry, DetailViewModelFactory(
-                    appModules.getDetailPageUrlUseCase()
-                )
-            ).get(DetailViewModel::class.java)
+                backStackEntry,
+                createViewModelFactory {
+                    DetailViewModel(appModules.getDetailPageUrlUseCase())
+                }
+            )[DetailViewModel::class.java]
 
             val encodedKeyword = backStackEntry.arguments?.getString("searchQuery")
             val keyword = Routes.extractSearchQuery(encodedKeyword)

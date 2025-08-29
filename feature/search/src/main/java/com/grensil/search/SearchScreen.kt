@@ -2,36 +2,15 @@ package com.grensil.search
 
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -41,37 +20,38 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.grensil.domain.dto.MediaItem
-import com.grensil.domain.dto.Summary
 import com.grensil.navigation.Routes
-import com.grensil.ui.component.CachedImage
+import com.grensil.search.component.SearchContent
+import com.grensil.search.component.SearchTextField
+import com.grensil.search.component.toContentState
 import com.grensil.ui.component.DismissKeyboardOnTouch
 
+/**
+ * 개선된 SearchScreen - 컴포넌트 분리로 단순화
+ * - 책임 분리: 상태 관리와 UI 렌더링 분리
+ * - 가독성 향상: 핵심 로직에 집중
+ * - 테스트 용이성: 컴포넌트별 독립 테스트 가능
+ */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
-
+    // State collection
     val searchedData by viewModel.searchedData.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
 
+    // UI State
     val listState = rememberLazyListState()
-
     val pullToRefreshState = rememberPullToRefreshState()
     val focusManager = LocalFocusManager.current
-
     var isProgrammaticScroll by rememberSaveable { mutableStateOf(false) }
 
+    // Side effects
     LaunchedEffect(Unit) {
         viewModel.scrollToTopEvent.collect {
             isProgrammaticScroll = true
@@ -81,294 +61,87 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
     }
 
     LaunchedEffect(listState.isScrollInProgress) {
-        if (listState.isScrollInProgress) {
-            if (!isProgrammaticScroll) {
-                focusManager.clearFocus()
-            }
+        if (listState.isScrollInProgress && !isProgrammaticScroll) {
+            focusManager.clearFocus()
         }
     }
 
+    // Event handlers
+    val handleBackClick: () -> Unit = {
+        val previousEntry = navController.previousBackStackEntry
+        if (previousEntry != null) {
+            navController.popBackStack()
+        }
+    }
+
+    val handleSummaryClick: (String) -> Unit = { searchTerm ->
+        try {
+            val route = Routes.Detail.createRoute(searchTerm)
+            navController.navigate(route)
+        } catch (e: Exception) {
+            Log.e("SearchScreen", "Navigation failed: ${e.message}")
+        }
+    }
+
+    val handleMediaItemClick: (String?) -> Unit = { keyword ->
+        keyword?.takeIf { it.isNotBlank() }?.let {
+            val route = Routes.Search.createRoute(it)
+            navController.navigate(route)
+        }
+    }
+
+    val handleRefresh: () -> Unit = {
+        if (searchQuery.isNotBlank()) {
+            viewModel.refreshSearch(searchQuery)
+        }
+    }
+
+    // UI
     DismissKeyboardOnTouch {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
-            onRefresh = {
-                if (searchQuery.isNotBlank()) {
-                    viewModel.refreshSearch(searchQuery)
-                }
-            },
+            onRefresh = handleRefresh,
             state = pullToRefreshState,
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // 상단 여백
                 Spacer(
                     modifier = Modifier
                         .height(16.dp)
                         .fillMaxWidth()
                 )
 
+                // 검색 입력 영역
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                 ) {
                     SearchTextField(
-                        query = searchQuery, onQueryChange = viewModel::search, onBackClick = {
-                            val previousEntry = navController.previousBackStackEntry
-                            Log.d(
-                                "SearchScreen", "Previous entry exists: ${previousEntry != null}"
-                            )
-                            Log.d(
-                                "SearchScreen",
-                                "Previous route: ${previousEntry?.destination?.route}"
-                            )
-
-                            if (previousEntry != null) {
-                                Log.d("SearchScreen", "Popping back stack")
-                                navController.popBackStack()
-                            } else {
-                                Log.d(
-                                    "SearchScreen", "No previous entry, navigating to search"
-                                )
-                            }
-                        }, modifier = Modifier.fillMaxWidth()
+                        query = searchQuery,
+                        onQueryChange = viewModel::search,
+                        onBackClick = handleBackClick,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
 
                 // 콘텐츠 영역
-                when (searchedData) {
-                    is SearchUiState.Idle -> {}
-                    is SearchUiState.Loading -> {
-                        if (!isRefreshing) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.size(40.dp))
-                            }
-                        }
-                    }
-
-                    is SearchUiState.Success -> {
-                        val data = searchedData as SearchUiState.Success
-                        SearchSuccessContent(
-                            summary = data.summary,
-                            mediaList = data.mediaList,
-                            searchQuery = searchQuery,
-                            listState = listState,
-                            navController = navController,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    is SearchUiState.Error -> {
-                        val data = searchedData as SearchUiState.Error
-                        Text(
-                            "Error: ${data.message}",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-fun SearchSuccessContent(
-    summary: Summary,
-    mediaList: List<MediaItem>,
-    searchQuery: String,
-    listState: LazyListState,
-    navController: NavHostController,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxSize()
-    ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            contentPadding = PaddingValues(top = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .padding(16.dp)
-                        .clickable {
-                            try {
-                                val route = Routes.Detail.createRoute(searchQuery)
-                                navController.navigate(route)
-                            } catch (e: Exception) {
-                                Log.e("SearchScreen", "Navigation failed: ${e.message}")
-                            }
-                        }, verticalArrangement = Arrangement.Top
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CachedImage(
-                            url = summary.thumbnailUrl,
-                            modifier = Modifier
-                                .width(120.dp)
-                                .height(80.dp)
-                        )
-                    }
-
-                    Spacer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(16.dp)
-                    )
-
-                    Text(
-                        modifier = Modifier.wrapContentSize(),
-                        text = summary.title,
-                        textAlign = TextAlign.Start,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    Text(
-                        modifier = Modifier.wrapContentSize(),
-                        text = summary.extract,
-                        textAlign = TextAlign.Start,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-
-            items(
-                count = mediaList.size, key = { index ->
-                    "${mediaList[index].title}_${mediaList[index].caption}_${index}"
-                }) { index ->
-                MediaItemView(
-                    mediaItem = mediaList[index], itemOnClick = {
-                        val keyword = mediaList[index].extractedKeywords ?: ""
-                        if (keyword.isNotBlank()) {
-                            val route = Routes.Search.createRoute(keyword)
-                            navController.navigate(route)
-                        }
-                    })
-            }
-        }
-    }
-}
-
-@Composable
-fun MediaItemView(mediaItem: MediaItem, itemOnClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .padding(16.dp)
-            .clickable { itemOnClick.invoke() }, verticalAlignment = Alignment.CenterVertically
-    ) {
-        CachedImage(url = mediaItem.imageUrl, modifier = Modifier.size(80.dp))
-
-        Spacer(
-            modifier = Modifier
-                .width(24.dp)
-                .fillMaxHeight()
-        )
-
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-            Text(
-                text = mediaItem.title,
-                modifier = Modifier.wrapContentSize(),
-                textAlign = TextAlign.Start,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-            )
-
-            Text(
-                text = mediaItem.caption,
-                modifier = Modifier.wrapContentSize(),
-                textAlign = TextAlign.Start,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-    }
-}
-
-@Composable
-fun SearchTextField(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier,
-        placeholder = { Text("텍스트를  입력하세요") },
-        leadingIcon = {
-
-            if (query.isNotEmpty()) {
-                IconButton(
-                    onClick = {
-                        onBackClick.invoke()
-                    }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "back"
-                    )
-                }
-            } else {
-                Icon(
-                    imageVector = Icons.Default.Search, contentDescription = "검색"
+                SearchContent(
+                    contentState = searchedData.toContentState(),
+                    listState = listState,
+                    isRefreshing = isRefreshing,
+                    onSummaryClick = handleSummaryClick,
+                    onMediaItemClick = handleMediaItemClick,
+                    modifier = Modifier.weight(1f)
                 )
             }
-
-
-        },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(
-                    onClick = { onQueryChange("") }) {
-                    Icon(
-                        imageVector = Icons.Default.Clear, contentDescription = "지우기"
-                    )
-                }
-            }
-        },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Search
-        )
-    )
+        }
+    }
 }
+
 
 @Preview
 @Composable

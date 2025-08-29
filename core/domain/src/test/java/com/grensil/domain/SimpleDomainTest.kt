@@ -36,10 +36,10 @@ class SimpleDomainTest {
     @Test
     fun `MediaItem filtering logic works correctly`() {
         // Test data
-        val validImageItem = MediaItem("Image Title", "Caption", "https://example.com/image.jpg", "image")
+        val validImageItem = MediaItem("Image Title", "Caption", null, "https://example.com/image.jpg", "image")
         val invalidItem = MediaItem("", "Caption") // Invalid title
-        val itemWithoutImage = MediaItem("Title", "Caption", null, "text")
-        val videoItem = MediaItem("Video Title", "Caption", "https://example.com/video.mp4", "video")
+        val itemWithoutImage = MediaItem("Title", "Caption", null, null, "text")
+        val videoItem = MediaItem("Video Title", "Caption", null, "https://example.com/video.mp4", "video")
         
         val allItems = listOf(validImageItem, invalidItem, itemWithoutImage, videoItem)
         
@@ -142,10 +142,10 @@ class SimpleDomainTest {
 
     @Test
     fun `MediaItem type detection works correctly`() {
-        assertTrue(MediaItem("Title", "Caption", "url", "image").isImage())
-        assertTrue(MediaItem("Title", "Caption", "url", "bitmap").isImage())
-        assertFalse(MediaItem("Title", "Caption", "url", "video").isImage())
-        assertFalse(MediaItem("Title", "Caption", "url", "unknown").isImage())
+        assertTrue(MediaItem("Title", "Caption", null, "url", "image").isImage())
+        assertTrue(MediaItem("Title", "Caption", null, "url", "bitmap").isImage())
+        assertFalse(MediaItem("Title", "Caption", null, "url", "video").isImage())
+        assertFalse(MediaItem("Title", "Caption", null, "url", "unknown").isImage())
     }
 
     @Test
@@ -157,7 +157,7 @@ class SimpleDomainTest {
         assertNull(summary.getDisplayImageUrl())
         
         // MediaItem with null values
-        val mediaItem = MediaItem("Title", "Caption", null)
+        val mediaItem = MediaItem("Title", "Caption", null, null)
         assertFalse(mediaItem.hasImage())
         assertEquals("Caption", mediaItem.getDisplayCaption())
     }

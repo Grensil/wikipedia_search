@@ -47,13 +47,21 @@ class GetMediaListUseCase(
     }
 
     /**
-     * Caption에서 의미있는 키워드 3개 추출
+     * Caption에서 의미있는 키워드 3개 추출 (비즈니스 로직)
+     * - 2글자 이상 단어만 선택
+     * - 특수문자 제거 후 알파벳/숫자만 보존
+     * - 최대 3개 키워드 추출
+     * - 빈 결과는 null 반환
      */
-    private fun extractKeywordsFromCaption(caption: String): String {
-        return caption
+    private fun extractKeywordsFromCaption(caption: String): String? {
+        if (caption.isBlank()) return null
+        
+        val keywords = caption
             .split("\\s+".toRegex()) // 공백으로 분할
-            .filter { it.length > 1 && it.matches("[a-zA-Z가-힣]+".toRegex()) } // 의미있는 단어만
-            .take(3)
-            .joinToString(" ")
+            .map { it.replace("[^a-zA-Z0-9가-힣]".toRegex(), "") } // 특수문자 제거
+            .filter { it.length > 2 } // 2글자 초과만
+            .take(3) // 최대 3개
+        
+        return keywords.takeIf { it.isNotEmpty() }?.joinToString(" ")
     }
 }

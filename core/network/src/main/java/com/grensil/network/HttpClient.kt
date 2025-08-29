@@ -1,6 +1,7 @@
 package com.grensil.network
 
 import android.util.Log
+import com.grensil.network.BuildConfig
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -246,9 +247,16 @@ class HttpClient {
         // Response Body 읽기
         val responseBody = readResponseBody(connection, statusCode)
 
-        Log.d("HttpClient", "Response Code: $statusCode")
-        Log.d("HttpClient", "Response Headers: $headers")
-        Log.d("HttpClient", "Response Body: $responseBody")
+        // 로깅은 디버그 모드에서만
+        if (BuildConfig.DEBUG) {
+            Log.d("HttpClient", "Response Code: $statusCode")
+            Log.d("HttpClient", "Response Headers: $headers")
+            // 민감한 데이터는 앞의 일부만 로깅
+            val safeBody = if (responseBody.length > 200) {
+                "${responseBody.take(200)}... [truncated ${responseBody.length - 200} chars]"
+            } else responseBody
+            Log.d("HttpClient", "Response Body: $safeBody")
+        }
 
         // HTTP 에러 상태 체크 및 예외 발생
         if (statusCode >= 400) {

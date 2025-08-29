@@ -42,6 +42,7 @@ object WikipediaMapper {
         return MediaItem(
             title = title,
             caption = entity.caption?.text ?: "",
+            extractedKeywords = null,
             imageUrl = entity.srcset?.firstOrNull()?.src,
             type = entity.type ?: "unknown"
         )
