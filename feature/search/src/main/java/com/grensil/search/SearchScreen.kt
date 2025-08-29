@@ -2,7 +2,6 @@ package com.grensil.search
 
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -57,9 +57,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.grensil.domain.dto.MediaItem
 import com.grensil.domain.dto.Summary
-import com.grensil.ui.component.CachedImage
-import androidx.compose.foundation.lazy.LazyListState
 import com.grensil.navigation.Routes
+import com.grensil.ui.component.CachedImage
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -305,7 +304,7 @@ fun SearchSuccessContent(
                 MediaItemView(
                     mediaItem = mediaList[index],
                     itemOnClick = {
-                        viewModel.getExtractorKeyword(caption = mediaList[index].caption)
+                        viewModel.search(keyword = mediaList[index].extractedKeywords?: "")
                     }
                 )
             }
@@ -419,7 +418,7 @@ fun SearchPartialSuccessContent(
                     MediaItemView(
                         mediaItem = mediaList[index],
                         itemOnClick = {
-                            viewModel.getExtractorKeyword(caption = mediaList[index].caption)
+                            viewModel.search(keyword = mediaList[index].extractedKeywords?: "")
                         }
                     )
                 }

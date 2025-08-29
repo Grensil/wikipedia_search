@@ -20,16 +20,19 @@ class GetMediaListUseCase(
     suspend operator fun invoke(searchTerm: String): List<MediaItem> {
         // 입력 유효성 검사
         require(searchTerm.isNotBlank()) { "Search term cannot be blank" }
-        require(searchTerm.length >= 2) { "Search term must be at least 2 characters" }
+        require(searchTerm.isNotEmpty()) { "Search term must be at least 1 characters" }
 
         // 검색어 정규화
         val normalizedSearchTerm = normalizeSearchTerm(searchTerm)
 
-        // Repository를 통해 데이터 조회
+        // Repository를 통해 데이터 조회 및 필터링, 키워드 추출
         val mediaItems = wikipediaRepository.getMediaList(normalizedSearchTerm)
-
-        // 결과 필터링 및 정렬
-        return filterAndSortMediaItems(mediaItems)
+        
+        return mediaItems
+            .filter { it.isValid() && it.hasImage() } // 먼저 필터링으로 처리할 객체 수 줄이기
+            .map { item -> 
+                item.copy(extractedKeywords = extractKeywordsFromCaption(item.caption))
+            }
     }
 
     /**
@@ -40,17 +43,17 @@ class GetMediaListUseCase(
             .trim()
             .replace("\\s+".toRegex(), " ")
             .split(" ")
-            .joinToString("_") { it.lowercase().replaceFirstChar { char -> char.uppercase() } }
+            .joinToString(" ") { it }
     }
 
     /**
-     * 미디어 아이템 필터링 및 정렬
+     * Caption에서 의미있는 키워드 3개 추출
      */
-    private fun filterAndSortMediaItems(items: List<MediaItem>): List<MediaItem> {
-        return items
-            .filter { it.isValid() } // 유효한 아이템만
-            .filter { it.hasImage() } // 이미지가 있는 아이템만
-            .sortedWith(compareBy<MediaItem> { !it.isImage() }.thenBy { it.title }) // 이미지 우선, 제목순 정렬
-            .take(20) // 최대 20개까지
+    private fun extractKeywordsFromCaption(caption: String): String {
+        return caption
+            .split("\\s+".toRegex()) // 공백으로 분할
+            .filter { it.length > 1 && it.matches("[a-zA-Z가-힣]+".toRegex()) } // 의미있는 단어만
+            .take(3)
+            .joinToString(" ")
     }
 }

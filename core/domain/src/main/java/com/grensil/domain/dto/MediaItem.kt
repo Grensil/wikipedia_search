@@ -6,6 +6,7 @@ package com.grensil.domain.dto
 data class MediaItem(
     val title: String,
     val caption: String,
+    val extractedKeywords : String? = null,
     val imageUrl: String? = null,
     val type: String = "unknown"
 ) {

@@ -7,7 +7,6 @@ import com.grensil.domain.dto.MediaItem
 import com.grensil.domain.dto.Summary
 import com.grensil.domain.usecase.GetMediaListUseCase
 import com.grensil.domain.usecase.GetSummaryUseCase
-import com.grensil.domain.usecase.SearchKeywordExtractorUseCase
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,8 +22,7 @@ import kotlinx.coroutines.flow.onEach
 @OptIn(FlowPreview::class)
 class SearchViewModel(
     private val getSummaryUseCase: GetSummaryUseCase,
-    private val getMediaListUseCase: GetMediaListUseCase,
-    private val searchKeywordExtractorUseCase: SearchKeywordExtractorUseCase
+    private val getMediaListUseCase: GetMediaListUseCase
 ) : ViewModel() {
 
     private var searchJob: Job? = null // 키워드 추출 및 즉시 검색용
@@ -151,75 +149,6 @@ class SearchViewModel(
                 _searchedData.value = SearchUiState.Error(errorMessage)
             } finally {
                 _isRefreshing.value = false
-            }
-        }
-    }
-
-    fun getExtractorKeyword(caption: String) = viewModelScope.launch {
-        // 이전 검색 작업 먼저 취소
-        searchJob?.cancel()
-        
-        _extractedKeyword.value = ExtractorUiState.Loading
-        try {
-            val extractedKeyword = searchKeywordExtractorUseCase(caption)
-            _extractedKeyword.value = ExtractorUiState.Success(extractedKeyword)
-            
-            // 추출된 키워드로 새로운 검색 시작 - 기존 상태 초기화
-            val newSearchQuery = extractedKeyword.joinToString(separator = " ")
-            updateSearchQuery(newSearchQuery)
-            
-            // 상태 초기화 후 검색 시작
-            _searchedData.value = SearchUiState.Idle
-            
-            // 디바운싱 없이 즉시 검색 (사용자 액션이므로)
-            performSearchImmediately(newSearchQuery)
-            
-        } catch (e: Exception) {
-            val errorMessage = when {
-                e.message?.contains("404") == true || e.message?.contains("Not Found") == true ->
-                    "'$caption'에 대한 결과가 없습니다.."
-                e.message?.contains("timeout") == true || e.message?.contains("시간") == true ->
-                    "연결 시간이 초과되었습니다. 다시 시도해주세요."
-                e.message?.contains("connection") == true || e.message?.contains("연결") == true ->
-                    "인터넷 연결을 확인해주세요"
-                e is IllegalArgumentException ->
-                    e.message ?: "잘못된 링크입니다"
-                else ->
-                    e.message ?: "알 수 없는 오류가 발생했습니다"
-            }
-            _extractedKeyword.value = ExtractorUiState.Error(errorMessage)
-        }
-    }
-    
-    private fun performSearchImmediately(keyword: String) {
-        searchJob?.cancel()
-        
-        searchJob = viewModelScope.launch {
-            _searchedData.value = SearchUiState.Loading
-            
-            try {
-                // Summary 먼저 로드
-                val summary = getSummaryUseCase(keyword)
-                
-                // Summary만 있는 상태로 업데이트
-                _searchedData.value = SearchUiState.PartialSuccess(
-                    summary = summary,
-                    mediaList = emptyList()
-                )
-                
-                // MediaList 로드
-                val mediaList = getMediaListUseCase(keyword)
-                
-                // 둘 다 완료된 상태로 업데이트
-                _searchedData.value = SearchUiState.Success(
-                    summary = summary,
-                    mediaList = mediaList
-                )
-                
-            } catch (e: Exception) {
-                Log.e("SearchViewModel", "Search error for '$keyword': ${e.message}", e)
-                val errorMessage = getErrorMessage(e, keyword)
-                _searchedData.value = SearchUiState.Error(errorMessage)
             }
         }
     }

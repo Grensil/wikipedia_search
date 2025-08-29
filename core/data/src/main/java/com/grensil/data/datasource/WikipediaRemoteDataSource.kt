@@ -1,8 +1,8 @@
 package com.grensil.data.datasource
 
-import com.grensil.data.mapper.WikipediaMapper
 import com.grensil.data.entity.MediaListEntity
 import com.grensil.data.entity.SummaryEntity
+import com.grensil.data.mapper.WikipediaMapper
 import com.grensil.domain.dto.MediaItem
 import com.grensil.domain.dto.Summary
 import com.grensil.network.HttpClient

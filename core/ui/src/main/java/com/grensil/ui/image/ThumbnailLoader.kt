@@ -3,12 +3,11 @@ package com.grensil.ui.image
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
+import androidx.core.graphics.scale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
-import androidx.core.graphics.scale
-import java.net.URI
 
 suspend fun loadBitmapFromUrl(url: String, width: Int? = null, height: Int? = null): Bitmap? {
     Log.d("Logd","${url}")

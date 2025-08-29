@@ -20,7 +20,7 @@ class GetSummaryUseCase(
     suspend operator fun invoke(searchTerm: String): Summary {
         // 입력 유효성 검사
         require(searchTerm.isNotBlank()) { "Search term cannot be blank" }
-        require(searchTerm.length >= 2) { "Search term must be at least 2 characters" }
+        require(searchTerm.isNotEmpty()) { "Search term must be at least 1 characters" }
 
         // 검색어 정규화
         val normalizedSearchTerm = normalizeSearchTerm(searchTerm)
@@ -44,6 +44,6 @@ class GetSummaryUseCase(
             .trim()
             .replace("\\s+".toRegex(), " ") // 연속 공백을 단일 공백으로
             .split(" ")
-            .joinToString("_") { it.lowercase().replaceFirstChar { char -> char.uppercase() } } // 각 단어 첫글자 대문자
+            .joinToString(" ") { it }
     }
 }

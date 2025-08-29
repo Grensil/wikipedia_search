@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
@@ -19,7 +18,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.grensil.detail.DetailScreen
@@ -33,7 +31,6 @@ import com.grensil.navigation.Routes
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -94,8 +91,7 @@ fun MainNavGraph(navController: NavHostController) {
                 ViewModelProvider(
                     it, SearchViewModelFactory(
                         appModules.getSummaryUseCase(),
-                        appModules.getMediaListUseCase(),
-                        appModules.getSearchKeywordExtractorUseCase()
+                        appModules.getMediaListUseCase()
                     )
                 ).get(SearchViewModel::class.java)
             }
@@ -136,8 +132,7 @@ fun MainNavGraph(navController: NavHostController) {
             val detailViewModel = owner?.let {
                 ViewModelProvider(
                     it, DetailViewModelFactory(
-                        appModules.getDetailPageUrlUseCase(),
-                        appModules.getSearchKeywordExtractorUseCase()
+                        appModules.getDetailPageUrlUseCase()
                     )
                 ).get(DetailViewModel::class.java)
             }
