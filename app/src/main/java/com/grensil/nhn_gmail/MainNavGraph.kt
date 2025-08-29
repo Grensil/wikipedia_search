@@ -57,50 +57,17 @@ fun MainNavGraph(navController: NavHostController) {
     val appModules = (context.applicationContext as NhnApplication).getWikipediaModule()
 
     NavHost(
-        navController = navController, startDestination = Routes.SEARCH
+        navController = navController, startDestination = Routes.Search.createInitialRoute()
     ) {
-        // 초기 검색 화면 (검색어 없음)
-        composable(route = Routes.SEARCH,
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { it },
-                    animationSpec = tween(300)
-                )
-            },
-            exitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { -it },
-                    animationSpec = tween(300)
-                )
-            },
-            popEnterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { -it },
-                    animationSpec = tween(300)
-                )
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(300)
-                )
-            }) { backStackEntry ->
-
-            val searchViewModel = ViewModelProvider(
-                backStackEntry, SearchViewModelFactory(
-                    appModules.getSummaryUseCase(),
-                    appModules.getMediaListUseCase(),
-                    null // 초기 화면은 검색어 없음
-                )
-            ).get(SearchViewModel::class.java)
-
-            SearchScreen(viewModel = searchViewModel, navController = navController)
-        }
-
-        // 검색어가 있는 검색 화면 (새로운 검색)
-        composable(route = Routes.SEARCH_TEMPLATE,
+        // 통합된 검색 화면 (파라미터 있으면 검색, 없으면 빈 화면)
+        composable(
+            route = Routes.SEARCH_TEMPLATE,
             arguments = listOf(
-                navArgument("searchQuery") { type = NavType.StringType },
+                navArgument("searchQuery") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
             ),
             enterTransition = {
                 slideInHorizontally(
@@ -134,7 +101,7 @@ fun MainNavGraph(navController: NavHostController) {
                 backStackEntry, SearchViewModelFactory(
                     appModules.getSummaryUseCase(),
                     appModules.getMediaListUseCase(),
-                    keyword // 초기 검색어를 ViewModel에 전달
+                    keyword // 파라미터가 있으면 해당 키워드로 검색, 없으면 null
                 )
             ).get(SearchViewModel::class.java)
             

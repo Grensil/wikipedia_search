@@ -9,7 +9,6 @@ import java.nio.charset.StandardCharsets
  * 모든 모듈에서 공통으로 사용하는 라우트 정보
  */
 object Routes {
-    const val SEARCH = "search"
     const val SEARCH_TEMPLATE = "search/{searchQuery}"
     const val DETAIL_TEMPLATE = "detail/{searchQuery}"
     
@@ -19,6 +18,13 @@ object Routes {
          */
         fun createRoute(searchQuery: String): String {
             return createRouteWithQuery("search", searchQuery)
+        }
+        
+        /**
+         * 초기 Search 화면 (검색어 없음)
+         */
+        fun createInitialRoute(): String {
+            return "search/"
         }
     }
     

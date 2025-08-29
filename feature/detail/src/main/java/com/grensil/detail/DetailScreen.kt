@@ -74,7 +74,7 @@ fun DetailScreen(
                                 navController.popBackStack()
                             } else {
                                 android.util.Log.d("DetailScreen", "No previous entry, navigating to search")
-                                navController.navigate(Routes.SEARCH) {
+                                navController.navigate(Routes.SEARCH_TEMPLATE) {
                                     popUpTo(0) { inclusive = true }
                                 }
                             }

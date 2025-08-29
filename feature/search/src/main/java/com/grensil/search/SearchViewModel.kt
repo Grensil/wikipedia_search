@@ -37,10 +37,10 @@ class SearchViewModel(
             _searchQuery.value = query
         }
         
-        // 디바운싱된 검색 처리
+        // 디바운싱된 검색 처리 (더 긴 지연시간)
         searchQuery
-            .debounce(300) // 300ms 디바운싱
-            .distinctUntilChanged() // 동일한 값 연속 입력 방지
+            .debounce(300)
+            .distinctUntilChanged()
             .onEach { keyword ->
                 performSearch(keyword)
             }
@@ -83,21 +83,29 @@ class SearchViewModel(
                 val summary = getSummaryUseCase(keyword)
                 Log.d("SearchViewModel", "Summary received: ${summary.title}")
                 
-                // Summary만 있는 상태로 업데이트
+                // 현재 상태에서 기존 mediaList 가져오기 (깜빡임 방지)
+                val currentState = _searchedData.value
+                val currentMediaList = when (currentState) {
+                    is SearchUiState.PartialSuccess -> currentState.mediaList
+                    is SearchUiState.Success -> currentState.mediaList
+                    else -> emptyList()
+                }
+                
+                // Summary와 기존 MediaList로 먼저 업데이트 (깜빡임 방지)
                 _searchedData.value = SearchUiState.PartialSuccess(
                     summary = summary,
-                    mediaList = emptyList()
+                    mediaList = currentMediaList
                 )
                 
                 // MediaList 로드
                 Log.d("SearchViewModel", "Starting media list search for: $keyword")
-                val mediaList = getMediaListUseCase(keyword)
-                Log.d("SearchViewModel", "MediaList received: ${mediaList.size} items")
+                val newMediaList = getMediaListUseCase(keyword)
+                Log.d("SearchViewModel", "MediaList received: ${newMediaList.size} items")
                 
                 // 둘 다 완료된 상태로 업데이트
                 _searchedData.value = SearchUiState.Success(
                     summary = summary,
-                    mediaList = mediaList
+                    mediaList = newMediaList
                 )
                 
             } catch (e: Exception) {
@@ -134,20 +142,36 @@ class SearchViewModel(
                 // Summary 먼저 로드
                 val summary = getSummaryUseCase(keyword)
                 
-                // Summary만 있는 상태로 업데이트
+                // 현재 상태를 가져와서 비교
+                val currentState = _searchedData.value
+                val currentMediaList = when (currentState) {
+                    is SearchUiState.PartialSuccess -> currentState.mediaList
+                    is SearchUiState.Success -> currentState.mediaList
+                    else -> emptyList()
+                }
+                
+                // Summary만 있는 상태로 업데이트 (기존 mediaList 유지)
                 _searchedData.value = SearchUiState.PartialSuccess(
                     summary = summary,
-                    mediaList = emptyList()
+                    mediaList = currentMediaList
                 )
                 
                 // MediaList 로드
-                val mediaList = getMediaListUseCase(keyword)
+                val newMediaList = getMediaListUseCase(keyword)
                 
-                // 둘 다 완료된 상태로 업데이트
-                _searchedData.value = SearchUiState.Success(
-                    summary = summary,
-                    mediaList = mediaList
-                )
+                // 리스트가 변경된 경우에만 업데이트
+                if (newMediaList != currentMediaList) {
+                    _searchedData.value = SearchUiState.Success(
+                        summary = summary,
+                        mediaList = newMediaList
+                    )
+                } else {
+                    // 데이터가 같으면 summary만 업데이트
+                    _searchedData.value = SearchUiState.Success(
+                        summary = summary,
+                        mediaList = currentMediaList
+                    )
+                }
                 
             } catch (e: Exception) {
                 Log.e("SearchViewModel", "Refresh search error for '$keyword': ${e.message}", e)

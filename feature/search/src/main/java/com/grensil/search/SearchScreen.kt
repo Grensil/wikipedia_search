@@ -2,6 +2,8 @@ package com.grensil.search
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,24 +32,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
-import kotlinx.coroutines.launch
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -59,6 +60,8 @@ import com.grensil.domain.dto.MediaItem
 import com.grensil.domain.dto.Summary
 import com.grensil.navigation.Routes
 import com.grensil.ui.component.CachedImage
+import com.grensil.ui.component.DismissKeyboardOnTouch
+import kotlinx.coroutines.launch
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -70,42 +73,47 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
 
     val listState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
-    val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
-    val snackbarHostState = remember { SnackbarHostState() }
 
-    // PullToRefreshBox를 최상위에 배치하여 전체 화면에서 제스처 인식
-    Box(modifier = Modifier.fillMaxSize()) {
+    var isProgrammaticScroll by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(searchedData) {
+        when (searchedData) {
+            is SearchUiState.Success -> {
+                isProgrammaticScroll = true
+                listState.animateScrollToItem(0)
+                isProgrammaticScroll = false
+            }
+
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(listState.isScrollInProgress) {
+        if (listState.isScrollInProgress) {
+            if (!isProgrammaticScroll) {
+                focusManager.clearFocus()
+            }
+        }
+    }
+
+    DismissKeyboardOnTouch {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = {
-                Log.d("Logd","onRefresh")
                 if (searchQuery.isNotBlank()) {
-                    coroutineScope.launch {
-                        viewModel.refreshSearch(searchQuery)
-                    }
+                    viewModel.refreshSearch(searchQuery)
                 }
             },
             state = pullToRefreshState,
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .pointerInput(Unit) {
-                    detectTapGestures(onTap = {
-                        focusManager.clearFocus()
-                    })
-                }
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .pointerInput(Unit) {
-                        detectTapGestures(onTap = {
-                            focusManager.clearFocus()
-                        })
-                    }
             ) {
-                // 고정 영역 (SearchTextField)
                 Spacer(
                     modifier = Modifier
                         .height(16.dp)
@@ -118,82 +126,63 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
                         .padding(horizontal = 16.dp)
                 ) {
                     SearchTextField(
-                        query = searchQuery, 
-                        onQueryChange = viewModel::search, 
-                        onBackClick = {
+                        query = searchQuery, onQueryChange = viewModel::search, onBackClick = {
                             navController.popBackStack()
-                        }, 
-                        modifier = Modifier.fillMaxWidth()
+                        }, modifier = Modifier.fillMaxWidth()
                     )
                 }
 
                 // 콘텐츠 영역
                 when (searchedData) {
-                is SearchUiState.Idle -> {}
-                is SearchUiState.Loading -> {
-                    // Pull to Refresh 중이 아닐 때만 CircularProgressIndicator 표시
-                    if (!isRefreshing) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator(
+                    is SearchUiState.Idle -> {}
+                    is SearchUiState.Loading -> {
+                        if (!isRefreshing) {
+                            Box(
                                 modifier = Modifier
-                                    .padding(16.dp)
-                                    .size(40.dp)
-                            )
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(40.dp))
+                            }
                         }
                     }
-                }
 
-                is SearchUiState.Success -> {
-                    val data = searchedData as SearchUiState.Success
-                    SearchSuccessContent(
-                        summary = data.summary,
-                        mediaList = data.mediaList,
-                        searchQuery = searchQuery,
-                        listState = listState,
-                        navController = navController,
-                        viewModel = viewModel,
-                        focusManager = focusManager,
-                        snackbarHostState = snackbarHostState,
-                        coroutineScope = coroutineScope,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                    is SearchUiState.Success -> {
+                        val data = searchedData as SearchUiState.Success
+                        SearchSuccessContent(
+                            summary = data.summary,
+                            mediaList = data.mediaList,
+                            searchQuery = searchQuery,
+                            listState = listState,
+                            navController = navController,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
 
-                is SearchUiState.PartialSuccess -> {
-                    val data = searchedData as SearchUiState.PartialSuccess
-                    SearchPartialSuccessContent(
-                        partialData = data,
-                        searchQuery = searchQuery,
-                        listState = listState,
-                        navController = navController,
-                        viewModel = viewModel,
-                        focusManager = focusManager,
-                        snackbarHostState = snackbarHostState,
-                        coroutineScope = coroutineScope,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                    is SearchUiState.PartialSuccess -> {
+                        val data = searchedData as SearchUiState.PartialSuccess
+                        SearchPartialSuccessContent(
+                            partialData = data,
+                            searchQuery = searchQuery,
+                            listState = listState,
+                            navController = navController,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
 
-                is SearchUiState.Error -> {
-                    val data = searchedData as SearchUiState.Error
-                    Text(
-                        "Error: ${data.message}",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
-                }
+                    is SearchUiState.Error -> {
+                        val data = searchedData as SearchUiState.Error
+                        Text(
+                            "Error: ${data.message}",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        )
+                    }
                 }
             }
         }
-        
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
     }
 }
 
@@ -205,22 +194,8 @@ fun SearchSuccessContent(
     searchQuery: String,
     listState: LazyListState,
     navController: NavHostController,
-    viewModel: SearchViewModel,
-    focusManager: androidx.compose.ui.focus.FocusManager,
-    snackbarHostState: SnackbarHostState,
-    coroutineScope: kotlinx.coroutines.CoroutineScope,
     modifier: Modifier = Modifier
 ) {
-    // 스크롤 시 키보드 숨김
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.isScrollInProgress }
-            .collect { isScrolling ->
-                if (isScrolling) {
-                    focusManager.clearFocus()
-                }
-            }
-    }
-
     Column(
         modifier = modifier.fillMaxSize()
     ) {
@@ -229,24 +204,14 @@ fun SearchSuccessContent(
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .padding(16.dp)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = {
-                            try {
-                                val route = Routes.Detail.createRoute(searchQuery)
-                                navController.navigate(route)
-                            } catch (e: Exception) {
-                                Log.e("SearchScreen", "Navigation failed: ${e.message}")
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "페이지를 열 수 없습니다. 다시 시도해주세요."
-                                    )
-                                }
-                            }
-                        }
-                    )
-                },
-            verticalArrangement = Arrangement.Top
+                .clickable {
+                    try {
+                        val route = Routes.Detail.createRoute(searchQuery)
+                        navController.navigate(route)
+                    } catch (e: Exception) {
+                        Log.e("SearchScreen", "Navigation failed: ${e.message}")
+                    }
+                }, verticalArrangement = Arrangement.Top
         ) {
             Row(
                 modifier = Modifier
@@ -256,8 +221,7 @@ fun SearchSuccessContent(
                 horizontalArrangement = Arrangement.Center
             ) {
                 CachedImage(
-                    url = summary.thumbnailUrl,
-                    modifier = Modifier
+                    url = summary.thumbnailUrl, modifier = Modifier
                         .width(120.dp)
                         .height(80.dp)
                 )
@@ -291,26 +255,22 @@ fun SearchSuccessContent(
             state = listState,
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-                .pointerInput(Unit) {
-                    detectTapGestures(onTap = {
-                        focusManager.clearFocus()
-                    })
-                },
+                .weight(1f),
             contentPadding = PaddingValues(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            items(count = mediaList.size) { index ->
+            items(
+                count = mediaList.size, key = { index ->
+                    "${mediaList[index].title}_${mediaList[index].caption}_${index}"
+                }) { index ->
                 MediaItemView(
-                    mediaItem = mediaList[index],
-                    itemOnClick = {
+                    mediaItem = mediaList[index], itemOnClick = {
                         val keyword = mediaList[index].extractedKeywords ?: ""
                         if (keyword.isNotBlank()) {
                             val route = Routes.Search.createRoute(keyword)
                             navController.navigate(route)
                         }
-                    }
-                )
+                    })
             }
         }
     }
@@ -322,21 +282,8 @@ fun SearchPartialSuccessContent(
     searchQuery: String,
     listState: LazyListState,
     navController: NavHostController,
-    viewModel: SearchViewModel,
-    focusManager: androidx.compose.ui.focus.FocusManager,
-    snackbarHostState: SnackbarHostState,
-    coroutineScope: kotlinx.coroutines.CoroutineScope,
     modifier: Modifier = Modifier
 ) {
-    // 스크롤 시 키보드 숨김
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.isScrollInProgress }
-            .collect { isScrolling ->
-                if (isScrolling) {
-                    focusManager.clearFocus()
-                }
-            }
-    }
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -347,25 +294,14 @@ fun SearchPartialSuccessContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(16.dp)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = {
-                            try {
-                                val route = Routes.Detail.createRoute(searchQuery)
-                                navController.navigate(route)
-                            } catch (e: Exception) {
-                                Log.e("SearchScreen", "Navigation failed: ${e.message}")
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "페이지를 열 수 없습니다. 다시 시도해주세요."
-                                    )
-                                }
-                            }
-                        }
-                    )
-                },
-            verticalArrangement = Arrangement.Top
+                .padding(16.dp).clickable {
+                    try {
+                        val route = Routes.Detail.createRoute(searchQuery)
+                        navController.navigate(route)
+                    } catch (e: Exception) {
+                        Log.e("SearchScreen", "Navigation failed: ${e.message}")
+                    }
+                }, verticalArrangement = Arrangement.Top
         ) {
             Row(
                 modifier = Modifier
@@ -375,8 +311,7 @@ fun SearchPartialSuccessContent(
                 horizontalArrangement = Arrangement.Center
             ) {
                 CachedImage(
-                    url = summary.thumbnailUrl,
-                    modifier = Modifier
+                    url = summary.thumbnailUrl, modifier = Modifier
                         .width(120.dp)
                         .height(80.dp)
                 )
@@ -409,26 +344,22 @@ fun SearchPartialSuccessContent(
                 state = listState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .pointerInput(Unit) {
-                        detectTapGestures(onTap = {
-                            focusManager.clearFocus()
-                        })
-                    },
+                    .weight(1f),
                 contentPadding = PaddingValues(top = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                items(count = mediaList.size) { index ->
+                items(
+                    count = mediaList.size, key = { index ->
+                        "${mediaList[index].title}_${mediaList[index].caption}_${index}"
+                    }) { index ->
                     MediaItemView(
-                        mediaItem = mediaList[index],
-                        itemOnClick = {
+                        mediaItem = mediaList[index], itemOnClick = {
                             val keyword = mediaList[index].extractedKeywords ?: ""
                             if (keyword.isNotBlank()) {
                                 val route = Routes.Search.createRoute(keyword)
                                 navController.navigate(route)
                             }
-                        }
-                    )
+                        })
                 }
             }
         } else {
@@ -446,8 +377,7 @@ fun SearchPartialSuccessContent(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "미디어 로딩 중...",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "미디어 로딩 중...", style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
@@ -461,12 +391,7 @@ fun MediaItemView(mediaItem: MediaItem, itemOnClick: () -> Unit) {
             .fillMaxWidth()
             .height(100.dp)
             .padding(16.dp)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { itemOnClick.invoke() }
-                )
-            },
-        verticalAlignment = Alignment.CenterVertically
+            .clickable { itemOnClick.invoke() }, verticalAlignment = Alignment.CenterVertically
     ) {
         CachedImage(url = mediaItem.imageUrl, modifier = Modifier.size(80.dp))
 
