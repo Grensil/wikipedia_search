@@ -32,7 +32,7 @@ class GetMediaListUseCaseTest {
     @Before
     fun setup() {
         fakeRepository = FakeWikipediaRepository()
-        useCase = GetMediaListUseCase(fakeRepository)
+        useCase = GetMediaListUseCaseImpl(fakeRepository)
     }
 
     /**

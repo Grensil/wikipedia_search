@@ -5,6 +5,7 @@ import com.grensil.domain.usecase.GetMediaListUseCase
 import com.grensil.domain.repository.WikipediaRepository
 import com.grensil.domain.dto.MediaItem
 import com.grensil.domain.dto.Summary
+import com.grensil.domain.usecase.GetMediaListUseCaseImpl
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.Assert.*
@@ -49,7 +50,7 @@ class RealWikipediaApiAndroidTest {
     @Before
     fun setup() {
         realRepository = RealWikipediaRepository()
-        useCase = GetMediaListUseCase(realRepository)
+        useCase = GetMediaListUseCaseImpl(realRepository)
     }
 
     /**
