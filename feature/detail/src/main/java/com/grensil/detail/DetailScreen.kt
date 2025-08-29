@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.util.Log
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -123,7 +127,7 @@ fun DetailScreen(
                     }
 
                     is DetailUiState.Success -> {
-                        WebPage(url = (uiState as DetailUiState.Success).webUrl)
+                        WebPage(url = (uiState as DetailUiState.Success).webUrl, navController)
                     }
 
                     is DetailUiState.Error -> {
@@ -143,7 +147,34 @@ fun DetailScreen(
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun WebPage(url: String) {
+fun WebPage(url: String, navController: NavHostController) {
+    var webViewRef by remember { mutableStateOf<WebView?>(null) }
+
+    // Compose 백버튼 처리
+    BackHandler(enabled = true) {
+        webViewRef?.let { webView ->
+            if (webView.canGoBack()) {
+                webView.goBack()
+            } else {
+                val previousEntry = navController.previousBackStackEntry
+                Log.d("DetailScreen", "Previous entry exists: ${previousEntry != null}")
+                Log.d(
+                    "DetailScreen",
+                    "Previous route: ${previousEntry?.destination?.route}"
+                )
+
+                if (previousEntry != null) {
+                    Log.d("DetailScreen", "Popping back stack")
+                    navController.popBackStack()
+                } else {
+                    Log.d(
+                        "DetailScreen", "No previous entry, navigating to search"
+                    )
+                }
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -151,15 +182,19 @@ fun WebPage(url: String) {
     ) {
         AndroidView(
             factory = { context ->
-            WebView(context).apply {
-                settings.javaScriptEnabled = true
-                webViewClient = WebViewClient()
-                setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                loadUrl(url)
-            }
-        }, update = { webView ->
-            webView.loadUrl(url)
-        }, modifier = Modifier.fillMaxSize()
+                WebView(context).apply {
+                    settings.javaScriptEnabled = true
+                    webViewClient = WebViewClient()
+                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    loadUrl(url)
+                    webViewRef = this
+                }
+            },
+            update = { webView ->
+                webView.loadUrl(url)
+                webViewRef = webView
+            },
+            modifier = Modifier.fillMaxSize()
         )
     }
 }
