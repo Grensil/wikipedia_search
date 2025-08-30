@@ -65,6 +65,7 @@ dependencies {
 
     // Test dependencies - Android API only
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test.v1102)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.ui.test.junit4)
