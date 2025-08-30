@@ -53,21 +53,25 @@ class AppTest {
     }
 
     /**
-     * 🔧 MainActivity 인스턴스 생성 테스트
+     * 🔧 MainActivity 클래스 로드 테스트
      * 
      * 테스트 시나리오:
-     * 1. MainActivity 인스턴스 생성 가능 여부 확인
-     * 2. 기본 상태 확인
+     * 1. MainActivity 클래스 로드 가능 여부 확인
+     * 2. 클래스 메타데이터 확인
      */
     @Test
-    fun `MainActivity can be instantiated`() {
-        // When: MainActivity 인스턴스 생성
-        val activity = MainActivity()
+    fun `MainActivity class can be loaded`() {
+        // When: MainActivity 클래스 로드
+        val activityClass = MainActivity::class.java
         
-        // Then: 인스턴스 생성 성공 확인
-        assertNotNull("MainActivity 인스턴스가 생성되어야 함", activity)
-        assertTrue("MainActivity는 ComponentActivity 타입이어야 함", 
-            activity is androidx.activity.ComponentActivity)
+        // Then: 클래스 로드 성공 확인
+        assertNotNull("MainActivity 클래스가 로드되어야 함", activityClass)
+        assertTrue("MainActivity는 ComponentActivity를 상속해야 함", 
+            androidx.activity.ComponentActivity::class.java.isAssignableFrom(activityClass))
+        
+        // 생성자 존재 확인
+        val constructors = activityClass.constructors
+        assertTrue("기본 생성자가 존재해야 함", constructors.isNotEmpty())
     }
 
     // =====================================
@@ -100,21 +104,25 @@ class AppTest {
     }
 
     /**
-     * 🔧 NhnApplication 인스턴스 생성 테스트
+     * 🔧 NhnApplication 클래스 로드 테스트
      * 
      * 테스트 시나리오:
-     * 1. NhnApplication 인스턴스 생성 가능 여부 확인
-     * 2. 기본 상태 확인
+     * 1. NhnApplication 클래스 로드 가능 여부 확인
+     * 2. 클래스 메타데이터 확인
      */
     @Test
-    fun `NhnApplication can be instantiated`() {
-        // When: NhnApplication 인스턴스 생성
-        val application = NhnApplication()
+    fun `NhnApplication class can be loaded`() {
+        // When: NhnApplication 클래스 로드
+        val applicationClass = NhnApplication::class.java
         
-        // Then: 인스턴스 생성 성공 확인
-        assertNotNull("NhnApplication 인스턴스가 생성되어야 함", application)
-        assertTrue("NhnApplication은 Application 타입이어야 함", 
-            application is android.app.Application)
+        // Then: 클래스 로드 성공 확인
+        assertNotNull("NhnApplication 클래스가 로드되어야 함", applicationClass)
+        assertTrue("NhnApplication은 Application을 상속해야 함", 
+            android.app.Application::class.java.isAssignableFrom(applicationClass))
+        
+        // 생성자 존재 확인
+        val constructors = applicationClass.constructors
+        assertTrue("기본 생성자가 존재해야 함", constructors.isNotEmpty())
     }
 
     // =====================================

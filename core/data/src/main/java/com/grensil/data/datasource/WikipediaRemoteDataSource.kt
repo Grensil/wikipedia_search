@@ -80,45 +80,41 @@ class WikipediaRemoteDataSource(
     }
 
     /**
-     * JSON을 SummaryDto로 수동 파싱 (Android 기본 JSONObject 사용)
+     * JSON을 SummaryDto로 수동 파싱 (순수 문자열 파싱으로 JSONObject 의존성 제거)
      */
     private fun parseJsonToSummary(jsonString: String): SummaryEntity {
         try {
-            val jsonObject = org.json.JSONObject(jsonString)
-
             // Thumbnail 파싱
-            val thumbnail = if (jsonObject.has("thumbnail")) {
-                val thumbObj = jsonObject.getJSONObject("thumbnail")
+            val thumbnail = extractNestedObject(jsonString, "thumbnail")?.let { thumbJson ->
                 SummaryEntity.ThumbnailEntity(
-                    source = thumbObj.optString("source").takeIf { it.isNotEmpty() },
-                    width = thumbObj.optInt("width").takeIf { it != 0 },
-                    height = thumbObj.optInt("height").takeIf { it != 0 }
+                    source = extractStringValue(thumbJson, "source"),
+                    width = extractIntValue(thumbJson, "width"),
+                    height = extractIntValue(thumbJson, "height")
                 )
-            } else null
+            }
 
             // Original Image 파싱
-            val originalImage = if (jsonObject.has("originalimage")) {
-                val imgObj = jsonObject.getJSONObject("originalimage")
+            val originalImage = extractNestedObject(jsonString, "originalimage")?.let { imgJson ->
                 SummaryEntity.OriginalImageEntity(
-                    source = imgObj.optString("source").takeIf { it.isNotEmpty() },
-                    width = imgObj.optInt("width").takeIf { it != 0 },
-                    height = imgObj.optInt("height").takeIf { it != 0 }
+                    source = extractStringValue(imgJson, "source"),
+                    width = extractIntValue(imgJson, "width"),
+                    height = extractIntValue(imgJson, "height")
                 )
-            } else null
+            }
 
             return SummaryEntity(
-                type = jsonObject.optString("type").takeIf { it.isNotEmpty() },
-                title = jsonObject.optString("title").takeIf { it.isNotEmpty() },
-                displaytitle = jsonObject.optString("displaytitle").takeIf { it.isNotEmpty() },
-                pageid = jsonObject.optInt("pageid").takeIf { it != 0 },
-                extract = jsonObject.optString("extract").takeIf { it.isNotEmpty() },
-                extractHtml = jsonObject.optString("extract_html").takeIf { it.isNotEmpty() },
+                type = extractStringValue(jsonString, "type"),
+                title = extractStringValue(jsonString, "title"),
+                displaytitle = extractStringValue(jsonString, "displaytitle"),
+                pageid = extractIntValue(jsonString, "pageid"),
+                extract = extractStringValue(jsonString, "extract"),
+                extractHtml = extractStringValue(jsonString, "extract_html"),
                 thumbnail = thumbnail,
                 originalimage = originalImage,
-                lang = jsonObject.optString("lang").takeIf { it.isNotEmpty() },
-                dir = jsonObject.optString("dir").takeIf { it.isNotEmpty() },
-                timestamp = jsonObject.optString("timestamp").takeIf { it.isNotEmpty() },
-                description = jsonObject.optString("description").takeIf { it.isNotEmpty() }
+                lang = extractStringValue(jsonString, "lang"),
+                dir = extractStringValue(jsonString, "dir"),
+                timestamp = extractStringValue(jsonString, "timestamp"),
+                description = extractStringValue(jsonString, "description")
             )
 
         } catch (e: Exception) {
@@ -127,50 +123,42 @@ class WikipediaRemoteDataSource(
     }
 
     /**
-     * JSON을 MediaListDto로 수동 파싱 (Android 기본 JSONObject 사용)
+     * JSON을 MediaListDto로 수동 파싱 (순수 문자열 파싱으로 JSONObject 의존성 제거)
      */
     private fun parseJsonToMediaList(jsonString: String): MediaListEntity {
         try {
-            val jsonObject = org.json.JSONObject(jsonString)
             val items = mutableListOf<MediaListEntity.MediaItemEntity>()
-
-            if (jsonObject.has("items")) {
-                val itemsArray = jsonObject.getJSONArray("items")
-
-                for (i in 0 until itemsArray.length()) {
-                    val itemObj = itemsArray.getJSONObject(i)
-
+            
+            // items 배열 추출
+            val itemsArrayJson = extractArray(jsonString, "items")
+            if (itemsArrayJson != null) {
+                val itemObjects = splitJsonArray(itemsArrayJson)
+                
+                for (itemJson in itemObjects) {
                     // Caption 파싱
-                    val caption = if (itemObj.has("caption")) {
-                        val captionObj = itemObj.getJSONObject("caption")
+                    val caption = extractNestedObject(itemJson, "caption")?.let { captionJson ->
                         MediaListEntity.MediaItemEntity.CaptionEntity(
-                            text = captionObj.optString("text").takeIf { it.isNotEmpty() },
-                            html = captionObj.optString("html").takeIf { it.isNotEmpty() }
+                            text = extractStringValue(captionJson, "text"),
+                            html = extractStringValue(captionJson, "html")
                         )
-                    } else null
+                    }
 
                     // SrcSet 파싱
-                    val srcSet = if (itemObj.has("srcset")) {
-                        val srcSetArray = itemObj.getJSONArray("srcset")
-                        val srcList = mutableListOf<MediaListEntity.MediaItemEntity.SrcSetEntity>()
-
-                        for (j in 0 until srcSetArray.length()) {
-                            val srcObj = srcSetArray.getJSONObject(j)
-                            srcList.add(
-                                MediaListEntity.MediaItemEntity.SrcSetEntity(
-                                    src = srcObj.optString("src").takeIf { it.isNotEmpty() },
-                                    scale = srcObj.optString("scale").takeIf { it.isNotEmpty() }
-                                )
+                    val srcSet = extractArray(itemJson, "srcset")?.let { srcSetJson ->
+                        val srcObjects = splitJsonArray(srcSetJson)
+                        srcObjects.map { srcObj ->
+                            MediaListEntity.MediaItemEntity.SrcSetEntity(
+                                src = extractStringValue(srcObj, "src"),
+                                scale = extractStringValue(srcObj, "scale")
                             )
                         }
-                        srcList
-                    } else emptyList()
+                    } ?: emptyList()
 
                     items.add(
                         MediaListEntity.MediaItemEntity(
-                            title = itemObj.optString("title").takeIf { it.isNotEmpty() },
-                            section_id = itemObj.optInt("section_id").takeIf { it != 0 },
-                            type = itemObj.optString("type").takeIf { it.isNotEmpty() },
+                            title = extractStringValue(itemJson, "title"),
+                            section_id = extractIntValue(itemJson, "section_id"),
+                            type = extractStringValue(itemJson, "type"),
                             caption = caption,
                             srcset = srcSet
                         )
@@ -183,5 +171,97 @@ class WikipediaRemoteDataSource(
         } catch (e: Exception) {
             throw e
         }
+    }
+
+    // =================================
+    // 순수 문자열 JSON 파싱 유틸리티
+    // =================================
+
+    /**
+     * JSON 문자열에서 문자열 값 추출
+     */
+    private fun extractStringValue(json: String, key: String): String? {
+        val pattern = """"$key"\s*:\s*"([^"]*)""""
+        val match = Regex(pattern).find(json)
+        return match?.groupValues?.get(1)?.takeIf { it.isNotEmpty() }
+    }
+
+    /**
+     * JSON 문자열에서 정수 값 추출
+     */
+    private fun extractIntValue(json: String, key: String): Int? {
+        val pattern = """"$key"\s*:\s*(\d+)"""
+        val match = Regex(pattern).find(json)
+        return match?.groupValues?.get(1)?.toIntOrNull()?.takeIf { it != 0 }
+    }
+
+    /**
+     * JSON 문자열에서 중첩 객체 추출
+     */
+    private fun extractNestedObject(json: String, key: String): String? {
+        val pattern = """"$key"\s*:\s*(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})"""
+        val match = Regex(pattern).find(json)
+        return match?.groupValues?.get(1)
+    }
+
+    /**
+     * JSON 문자열에서 배열 추출
+     */
+    private fun extractArray(json: String, key: String): String? {
+        val pattern = """"$key"\s*:\s*(\[[^\]]*\])"""
+        val match = Regex(pattern).find(json)
+        return match?.groupValues?.get(1)
+    }
+
+    /**
+     * JSON 배열 문자열을 개별 객체들로 분할
+     */
+    private fun splitJsonArray(arrayJson: String): List<String> {
+        // 배열 괄호 제거
+        val content = arrayJson.trim().removePrefix("[").removeSuffix("]").trim()
+        if (content.isEmpty()) return emptyList()
+        
+        val objects = mutableListOf<String>()
+        var current = StringBuilder()
+        var braceCount = 0
+        var inString = false
+        var escaped = false
+        
+        for (char in content) {
+            when {
+                escaped -> {
+                    current.append(char)
+                    escaped = false
+                }
+                char == '\\' && inString -> {
+                    current.append(char)
+                    escaped = true
+                }
+                char == '"' -> {
+                    current.append(char)
+                    inString = !inString
+                }
+                !inString && char == '{' -> {
+                    current.append(char)
+                    braceCount++
+                }
+                !inString && char == '}' -> {
+                    current.append(char)
+                    braceCount--
+                    if (braceCount == 0) {
+                        objects.add(current.toString().trim())
+                        current = StringBuilder()
+                    }
+                }
+                !inString && char == ',' && braceCount == 0 -> {
+                    // 객체 간 구분자, 무시
+                }
+                else -> {
+                    current.append(char)
+                }
+            }
+        }
+        
+        return objects
     }
 }
