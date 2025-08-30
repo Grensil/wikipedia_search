@@ -1,5 +1,6 @@
 package com.grensil.data.datasource
 
+import android.util.Log
 import com.grensil.data.entity.MediaListEntity
 import com.grensil.data.entity.SummaryEntity
 import com.grensil.data.mapper.WikipediaMapper
@@ -63,6 +64,7 @@ class WikipediaRemoteDataSource(
 
             // JSON 수동 파싱 (Android 기본 API만 사용)
             val mediaListDto = parseJsonToMediaList(response.body)
+
             return WikipediaMapper.mapToMediaItemList(mediaListDto)
 
         } catch (e: NhnNetworkException) {
@@ -127,14 +129,12 @@ class WikipediaRemoteDataSource(
      */
     private fun parseJsonToMediaList(jsonString: String): MediaListEntity {
         try {
-            val items = mutableListOf<MediaListEntity.MediaItemEntity>()
-            
-            // items 배열 추출
-            val itemsArrayJson = extractArray(jsonString, "items")
-            if (itemsArrayJson != null) {
-                val itemObjects = splitJsonArray(itemsArrayJson)
-                
-                for (itemJson in itemObjects) {
+            // items 배열에서 각 객체를 정규식으로 직접 추출하여 매핑
+            val itemPattern = """\{"title":[^}]*(?:\{[^}]*\}[^}]*)*\}""".toRegex()
+            val items = itemPattern.findAll(jsonString)
+                .map { itemMatch ->
+                    val itemJson = itemMatch.value
+
                     // Caption 파싱
                     val caption = extractNestedObject(itemJson, "caption")?.let { captionJson ->
                         MediaListEntity.MediaItemEntity.CaptionEntity(
@@ -143,33 +143,39 @@ class WikipediaRemoteDataSource(
                         )
                     }
 
-                    // SrcSet 파싱
-                    val srcSet = extractArray(itemJson, "srcset")?.let { srcSetJson ->
-                        val srcObjects = splitJsonArray(srcSetJson)
-                        srcObjects.map { srcObj ->
-                            MediaListEntity.MediaItemEntity.SrcSetEntity(
-                                src = extractStringValue(srcObj, "src"),
-                                scale = extractStringValue(srcObj, "scale")
-                            )
-                        }
-                    } ?: emptyList()
+                    Log.d("Logd","itemMatch: ${itemMatch.value}}")
+                    // SrcSet 파싱 - 단순화된 추출
+                    val srcSet = extractSrcSet(itemJson)
 
-                    items.add(
-                        MediaListEntity.MediaItemEntity(
-                            title = extractStringValue(itemJson, "title"),
-                            section_id = extractIntValue(itemJson, "section_id"),
-                            type = extractStringValue(itemJson, "type"),
-                            caption = caption,
-                            srcset = srcSet
-                        )
+                    MediaListEntity.MediaItemEntity(
+                        title = extractStringValue(itemJson, "title"),
+                        section_id = extractIntValue(itemJson, "section_id"),
+                        type = extractStringValue(itemJson, "type"),
+                        caption = caption,
+                        srcset = srcSet
                     )
                 }
-            }
+                .toList()
 
             return MediaListEntity(items = items)
 
         } catch (e: Exception) {
             throw e
+        }
+    }
+    
+    /**
+     * SrcSet 배열을 간단히 추출하는 헬퍼 함수
+     */
+    private fun extractSrcSet(itemJson: String): List<MediaListEntity.MediaItemEntity.SrcSetEntity> {
+        val srcSetPattern = """"src"\s*:\s*"([^"]*)"""".toRegex()
+        val scalePattern = """"scale"\s*:\s*"([^"]*)"""".toRegex()
+        
+        val srcMatches = srcSetPattern.findAll(itemJson).map { it.groupValues[1] }.toList()
+        val scaleMatches = scalePattern.findAll(itemJson).map { it.groupValues[1] }.toList()
+        
+        return srcMatches.zip(scaleMatches) { src, scale ->
+            MediaListEntity.MediaItemEntity.SrcSetEntity(src = src, scale = scale)
         }
     }
 
@@ -204,64 +210,4 @@ class WikipediaRemoteDataSource(
         return match?.groupValues?.get(1)
     }
 
-    /**
-     * JSON 문자열에서 배열 추출
-     */
-    private fun extractArray(json: String, key: String): String? {
-        val pattern = """"$key"\s*:\s*(\[[^\]]*\])"""
-        val match = Regex(pattern).find(json)
-        return match?.groupValues?.get(1)
-    }
-
-    /**
-     * JSON 배열 문자열을 개별 객체들로 분할
-     */
-    private fun splitJsonArray(arrayJson: String): List<String> {
-        // 배열 괄호 제거
-        val content = arrayJson.trim().removePrefix("[").removeSuffix("]").trim()
-        if (content.isEmpty()) return emptyList()
-        
-        val objects = mutableListOf<String>()
-        var current = StringBuilder()
-        var braceCount = 0
-        var inString = false
-        var escaped = false
-        
-        for (char in content) {
-            when {
-                escaped -> {
-                    current.append(char)
-                    escaped = false
-                }
-                char == '\\' && inString -> {
-                    current.append(char)
-                    escaped = true
-                }
-                char == '"' -> {
-                    current.append(char)
-                    inString = !inString
-                }
-                !inString && char == '{' -> {
-                    current.append(char)
-                    braceCount++
-                }
-                !inString && char == '}' -> {
-                    current.append(char)
-                    braceCount--
-                    if (braceCount == 0) {
-                        objects.add(current.toString().trim())
-                        current = StringBuilder()
-                    }
-                }
-                !inString && char == ',' && braceCount == 0 -> {
-                    // 객체 간 구분자, 무시
-                }
-                else -> {
-                    current.append(char)
-                }
-            }
-        }
-        
-        return objects
-    }
 }

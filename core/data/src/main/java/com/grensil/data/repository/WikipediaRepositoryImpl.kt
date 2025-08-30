@@ -1,5 +1,6 @@
 package com.grensil.data.repository
 
+import android.util.Log
 import com.grensil.data.datasource.WikipediaRemoteDataSource
 import com.grensil.domain.dto.MediaItem
 import com.grensil.domain.dto.Summary
@@ -22,6 +23,7 @@ class WikipediaRepositoryImpl(
 
     override suspend fun getMediaList(searchTerm: String): List<MediaItem> {
         return withContext(Dispatchers.IO) {
+
             remoteDataSource.getMediaList(searchTerm)
         }
     }

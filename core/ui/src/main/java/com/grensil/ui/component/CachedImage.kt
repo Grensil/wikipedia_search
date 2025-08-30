@@ -49,7 +49,7 @@ fun CachedImage(url: String? = null, width: Int? = null, height: Int? = null, mo
                 color = Color.Gray,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                maxLines = 1)
+                maxLines = 2)
 
         }
     }

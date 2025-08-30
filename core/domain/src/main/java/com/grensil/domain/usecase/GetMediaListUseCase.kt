@@ -36,7 +36,7 @@ class GetMediaListUseCaseImpl(
         val mediaItems = wikipediaRepository.getMediaList(normalizedSearchTerm)
         
         return mediaItems
-            .filter { it.isValid() && it.hasImage() } // 먼저 필터링으로 처리할 객체 수 줄이기
+            .filter { it.isValid() }
             .map { item -> 
                 item.copy(extractedKeywords = extractKeywordsFromCaption(item.caption))
             }
