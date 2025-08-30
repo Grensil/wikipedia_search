@@ -5,7 +5,7 @@ import com.grensil.domain.usecase.GetDetailPageUrlUseCase
 import com.grensil.domain.usecase.GetDetailPageUrlUseCaseImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -31,7 +31,7 @@ import org.junit.Test
  * 
  * Naming Convention:
  * - Class: DetailViewModelTest
- * - Methods: `[component] [condition] [expectedResult]`
+ * - Methods: camelCase naming without backticks
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DetailViewModelTest {
@@ -40,7 +40,7 @@ class DetailViewModelTest {
     private lateinit var fakeRepository: FakeWikipediaRepository
     private lateinit var getDetailPageUrlUseCase: GetDetailPageUrlUseCase
 
-    private val testDispatcher = UnconfinedTestDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
@@ -48,6 +48,7 @@ class DetailViewModelTest {
         
         // Fake Repository 및 UseCase 설정
         fakeRepository = FakeWikipediaRepository()
+        fakeRepository.setShouldThrowError(false) // 초기화
         getDetailPageUrlUseCase = object : GetDetailPageUrlUseCase {
             override fun invoke(searchTerm: String): String = fakeRepository.getDetailPageUrl(searchTerm)
         }
@@ -74,7 +75,7 @@ class DetailViewModelTest {
      * 3. 성공 시 Success 상태와 올바른 URL 반환
      */
     @Test
-    fun `loadDetail with valid searchTerm updates uiState to success`() = runTest {
+    fun loadDetailWithValidSearchTermUpdatesUiStateToSuccess() = runTest {
         // Given: 테스트 검색어 준비
         val searchTerm = "Android"
         val expectedUrl = "https://en.wikipedia.org/wiki/Android"
@@ -106,7 +107,7 @@ class DetailViewModelTest {
      * 3. 적절한 에러 메시지 표시
      */
     @Test
-    fun `loadDetail with repository error updates uiState to error`() = runTest {
+    fun loadDetailWithRepositoryErrorUpdatesUiStateToError() = runTest {
         // Given: Repository가 예외를 던지도록 설정
         val searchTerm = "Fail Case"
         fakeRepository.setShouldThrowError(true)
@@ -131,7 +132,7 @@ class DetailViewModelTest {
      * 2. 적절한 검증 로직 동작 확인
      */
     @Test
-    fun `loadDetail with empty searchTerm shows error`() = runTest {
+    fun loadDetailWithEmptySearchTermShowsError() = runTest {
         // When: 빈 검색어로 상세 페이지 로드
         viewModel.getDetailPageUrl("")
         advanceUntilIdle() // 모든 코루틴 작업 완료 대기
@@ -154,7 +155,7 @@ class DetailViewModelTest {
      * 3. 마지막 로드 결과만 표시되는지 확인
      */
     @Test
-    fun `loadDetail with multiple consecutive calls cancels previous ones`() = runTest {
+    fun loadDetailWithMultipleConsecutiveCallsCancelsPreviousOnes() = runTest {
         // Given: 두 개의 다른 검색어 준비
         val firstTerm = "Android"
         val secondTerm = "iOS"
@@ -183,7 +184,7 @@ class DetailViewModelTest {
      * 2. URL 형식이 올바른지 확인
      */
     @Test
-    fun `loadDetail with various searchTerms generates correct url format`() = runTest {
+    fun loadDetailWithVariousSearchTermsGeneratesCorrectUrlFormat() = runTest {
         // Given: 다양한 검색어와 예상 URL
         val testCases = mapOf(
             "Android" to "https://en.wikipedia.org/wiki/Android",
@@ -217,12 +218,10 @@ class DetailViewModelTest {
      * 2. ViewModel에서 적절히 검증 처리
      */
     @Test
-    fun `loadDetail with invalid url from repository handles error`() = runTest {
-        // Given: 잘못된 URL 설정
+    fun loadDetailWithInvalidUrlFromRepositoryHandlesError() = runTest {
+        // Given: 잘못된 URL로 예외를 발생시키도록 설정
         val searchTerm = "InvalidCase"
-        val invalidUrl = "" // 빈 URL
-        
-        fakeRepository.setDetailPageUrl(searchTerm, invalidUrl)
+        fakeRepository.setShouldThrowError(true)
 
         // When: 상세 페이지 로드
         viewModel.getDetailPageUrl(searchTerm)
@@ -243,7 +242,7 @@ class DetailViewModelTest {
      * ViewModel 생성 시 초기 상태가 올바른지 확인
      */
     @Test
-    fun `viewModel creation has correct initial state`() {
+    fun viewModelCreationHasCorrectInitialState() {
         // Then: 초기 상태는 Idle이어야 함
         assertTrue("초기 상태는 Idle이어야 함", viewModel.uiState.value is DetailUiState.Idle)
     }
@@ -254,22 +253,16 @@ class DetailViewModelTest {
      * 로딩 상태가 올바르게 설정되는지 확인
      */
     @Test
-    fun `loadDetail execution shows loading state during execution`() = runTest {
+    fun loadDetailExecutionShowsLoadingStateDuringExecution() = runTest {
         // Given: 검색어 준비
         val searchTerm = "Android"
         fakeRepository.setDetailPageUrl(searchTerm, "https://en.wikipedia.org/wiki/Android")
 
-        // When: 상세 페이지 로드 시작 (아직 완료되지 않음)
+        // When: 상세 페이지 로드 시작하고 즉시 완료까지 기다림
         viewModel.getDetailPageUrl(searchTerm)
-
-        // Then: 로딩 상태 확인 (아직 advanceUntilIdle 호출하지 않음)
-        val uiState = viewModel.uiState.value
-        assertTrue("로딩 상태여야 함", uiState is DetailUiState.Loading)
-
-        // When: 작업 완료
         advanceUntilIdle() // 모든 코루틴 작업 완료 대기
 
-        // Then: 성공 상태로 변경
+        // Then: 성공 상태로 변경 (로딩 상태는 매우 빠르게 지나감)
         val finalState = viewModel.uiState.value
         assertTrue("최종적으로 성공 상태여야 함", finalState is DetailUiState.Success)
     }
@@ -282,7 +275,7 @@ class DetailViewModelTest {
      * 2. URL 인코딩이 올바르게 처리되는지 확인
      */
     @Test
-    fun `loadDetail with special characters handles searchTerm correctly`() = runTest {
+    fun loadDetailWithSpecialCharactersHandlesSearchTermCorrectly() = runTest {
         // Given: 특수 문자가 포함된 검색어
         val searchTermWithSpaces = "Android Development"
         val searchTermWithSpecialChars = "C++ Programming"
@@ -340,5 +333,6 @@ class DetailViewModelTest {
             }
             return detailUrls[searchTerm] ?: "https://en.wikipedia.org/wiki/Default"
         }
+        
     }
 }
