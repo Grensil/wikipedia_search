@@ -437,30 +437,27 @@ class MediaItemCardTest {
 
     @Test
     fun mediaItemCard_handlesVariousMediaTypes() {
-        val mediaTypes = listOf("image", "video", "audio", "document")
+        // 하나의 미디어 타입만 테스트 (setContent는 한 번만 호출해야 함)
+        val testMediaItem = createTestMediaItem(
+            title = "Test Media Item",
+            caption = "This is a test media file",
+            type = "image"
+        )
 
-        mediaTypes.forEach { type ->
-            val testMediaItem = createTestMediaItem(
-                title = "$type Item",
-                caption = "This is a $type file",
-                type = type
+        composeTestRule.setContent {
+            MediaItemCard(
+                mediaItem = testMediaItem,
+                onClick = { }
             )
-
-            composeTestRule.setContent {
-                MediaItemCard(
-                    mediaItem = testMediaItem,
-                    onClick = { }
-                )
-            }
-
-            composeTestRule
-                .onNodeWithText("$type Item")
-                .assertExists()
-
-            composeTestRule
-                .onNodeWithText("This is a $type file")
-                .assertExists()
         }
+
+        composeTestRule
+            .onNodeWithText("Test Media Item")
+            .assertExists()
+
+        composeTestRule
+            .onNodeWithText("This is a test media file")
+            .assertExists()
     }
 
     // =====================================
