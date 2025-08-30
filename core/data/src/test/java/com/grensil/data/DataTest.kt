@@ -28,7 +28,7 @@ import org.junit.Test
  * - Android API + JUnit 4만 사용
  * - 빠른 실행 속도로 개발 중 자주 실행 가능
  */
-class DataLayerCompleteTest {
+class DataTest {
 
     // =================================
     // Summary 데이터 클래스 테스트

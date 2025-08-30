@@ -27,7 +27,7 @@ import org.junit.runner.RunWith
  * 4. Edge Case Tests - 예외 상황 처리 테스트
  */
 @RunWith(AndroidJUnit4::class)
-class WikipediaRepositoryCompleteTest {
+class DataAndroidTest {
 
     private lateinit var repository: WikipediaRepositoryImpl
     private lateinit var httpClient: HttpClient
@@ -46,7 +46,7 @@ class WikipediaRepositoryCompleteTest {
     // =====================================
 
     @Test
-    fun testRepository_initialization_succeeds() {
+    fun test_repository_initialization_succeeds() {
         // Repository가 올바르게 초기화되는지 확인
         assertNotNull("Repository should be initialized", repository)
         assertNotNull("HttpClient should be initialized", httpClient)
@@ -58,7 +58,7 @@ class WikipediaRepositoryCompleteTest {
     // =====================================
 
     @Test
-    fun testGetDetailPageUrl_withValidSearchTerm_returnsValidUrl() {
+    fun test_repository_getDetailPageUrl_with_valid_searchTerm_returns_valid_url() {
         val searchTerm = "Android"
         
         val result = repository.getDetailPageUrl(searchTerm)
@@ -70,7 +70,7 @@ class WikipediaRepositoryCompleteTest {
     }
 
     @Test
-    fun testGetDetailPageUrl_withSpecialCharacters_handlesCorrectly() {
+    fun test_repository_getDetailPageUrl_with_special_characters_handles_correctly() {
         val searchTerm = "Albert Einstein"
         
         val result = repository.getDetailPageUrl(searchTerm)
@@ -81,7 +81,7 @@ class WikipediaRepositoryCompleteTest {
     }
 
     @Test
-    fun testGetDetailPageUrl_withEmptyString_handlesGracefully() {
+    fun test_repository_getDetailPageUrl_with_empty_string_handles_gracefully() {
         try {
             val result = repository.getDetailPageUrl("")
             // 빈 문자열도 처리되어야 함
@@ -94,7 +94,7 @@ class WikipediaRepositoryCompleteTest {
     }
 
     @Test
-    fun testGetDetailPageUrl_withLongSearchTerm_handlesCorrectly() {
+    fun test_repository_getDetailPageUrl_with_long_searchTerm_handles_correctly() {
         val longSearchTerm = "This is a very long search term with many words that should still work"
         
         val result = repository.getDetailPageUrl(longSearchTerm)
@@ -105,7 +105,7 @@ class WikipediaRepositoryCompleteTest {
     }
 
     @Test
-    fun testGetDetailPageUrl_withSpecialCharacters_encodesCorrectly() {
+    fun test_repository_getDetailPageUrl_with_special_characters_encodes_correctly() {
         val specialSearchTerm = "C++ Programming"
         
         val result = repository.getDetailPageUrl(specialSearchTerm)
@@ -130,7 +130,7 @@ class WikipediaRepositoryCompleteTest {
     // =====================================
 
     @Test
-    fun testGetSummary_withValidSearchTerm_returnsNonNullResult() = runTest {
+    fun test_repository_getSummary_with_valid_searchTerm_returns_non_null_result() = runTest {
         val searchTerm = "Android"
         
         try {
@@ -153,7 +153,7 @@ class WikipediaRepositoryCompleteTest {
     }
 
     @Test
-    fun testGetMediaList_withValidSearchTerm_returnsNonEmptyList() = runTest {
+    fun test_repository_getMediaList_with_valid_searchTerm_returns_non_empty_list() = runTest {
         val searchTerm = "Android"
         
         try {
@@ -177,7 +177,7 @@ class WikipediaRepositoryCompleteTest {
     }
 
     @Test
-    fun testGetSummary_withSpecialCharacters_handlesCorrectly() = runTest {
+    fun test_repository_getSummary_with_special_characters_handles_correctly() = runTest {
         val searchTerm = "Albert Einstein"
         
         try {
@@ -196,7 +196,7 @@ class WikipediaRepositoryCompleteTest {
     }
 
     @Test
-    fun testGetMediaList_withValidSearchTerm_handlesApiCall() = runTest {
+    fun test_repository_getMediaList_with_valid_searchTerm_handles_api_call() = runTest {
         val searchTerm = "Android"
         
         try {
@@ -225,7 +225,7 @@ class WikipediaRepositoryCompleteTest {
     // =====================================
 
     @Test
-    fun testRepository_withMultipleSearchTerms_consistency() = runTest {
+    fun test_repository_with_multiple_searchTerms_maintains_consistency() = runTest {
         val searchTerms = listOf("Java", "Python", "Kotlin", "React")
         
         searchTerms.forEach { term ->
@@ -254,7 +254,7 @@ class WikipediaRepositoryCompleteTest {
     // =====================================
 
     @Test
-    fun testGetSummary_withUncommonSearchTerm_handlesGracefully() = runTest {
+    fun test_repository_getSummary_with_uncommon_searchTerm_handles_gracefully() = runTest {
         val uncommonTerm = "ZxQwErTyUiOp123456"
         
         try {
@@ -271,7 +271,7 @@ class WikipediaRepositoryCompleteTest {
     }
 
     @Test
-    fun testRepository_performanceWithConsecutiveCalls() = runTest {
+    fun test_repository_performance_with_consecutive_calls() = runTest {
         val startTime = System.currentTimeMillis()
         
         repeat(3) { index ->

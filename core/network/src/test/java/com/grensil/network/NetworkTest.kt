@@ -5,26 +5,19 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * 🌐 Network Module 통합 Unit Test 클래스
+ * Network Module Unit Test
  * 
- * 통합된 파일들:
- * - HttpClientTest.kt (HttpClient 및 데이터 클래스 테스트)
- * - HttpResponseTest.kt (HttpResponse 유틸리티 메소드 테스트)
+ * Tests network layer components:
+ * - HTTP client functionality
+ * - HTTP response handling
+ * - Network error processing
+ * - Data transformation utilities
  * 
- * 구조:
- * 1. HttpResponse Tests - HTTP 응답 처리 및 유틸리티 메소드
- * 2. HttpClient Tests - HTTP 클라이언트 데이터 클래스 및 기본 동작
- * 3. HttpRequest Tests - HTTP 요청 검증 및 데이터 처리
- * 4. Exception Tests - 네트워크 예외 처리 계층
- * 5. Extension Methods Tests - 응답 데이터 변환 확장 함수들
- * 
- * 테스트 목적:
- * - HttpURLConnection 기반 통신 모듈의 모든 구성요소 검증
- * - HTTP 요청/응답 데이터 클래스 동작 확인
- * - 예외 처리 및 응답 유틸리티 메소드 검증
- * - 확장 함수들의 데이터 변환 로직 검증
+ * Naming Convention:
+ * - Class: NetworkTest
+ * - Methods: test_[component]_[condition]_[expectedResult]
  */
-class NetworkModuleCompleteTest {
+class NetworkTest {
 
     private lateinit var httpClient: HttpClient
 

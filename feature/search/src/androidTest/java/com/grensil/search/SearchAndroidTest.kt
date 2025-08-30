@@ -30,7 +30,7 @@ import org.junit.runner.RunWith
  * 3. Common Mock Setup - 재사용 가능한 Mock 설정
  */
 @RunWith(AndroidJUnit4::class)
-class SearchScreenCompleteTest {
+class SearchAndroidTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
@@ -40,7 +40,7 @@ class SearchScreenCompleteTest {
     // =====================================
 
     @Test
-    fun searchTextField_displays_correctly() {
+    fun test_searchTextField_displays_correctly() {
         composeTestRule.setContent {
             SearchTextField(
                 query = "",
@@ -56,7 +56,7 @@ class SearchScreenCompleteTest {
     }
 
     @Test
-    fun searchTextField_shows_search_icon_initially() {
+    fun test_searchTextField_initialization_shows_search_icon() {
         composeTestRule.setContent {
             SearchTextField(
                 query = "",
@@ -72,7 +72,7 @@ class SearchScreenCompleteTest {
     }
 
     @Test
-    fun searchTextField_shows_clear_icon_when_has_text() {
+    fun test_searchTextField_with_text_shows_clear_icon() {
         composeTestRule.setContent {
             SearchTextField(
                 query = "Test Query",
@@ -88,7 +88,7 @@ class SearchScreenCompleteTest {
     }
 
     @Test
-    fun searchTextField_accepts_input() {
+    fun test_searchTextField_input_accepts_correctly() {
         var currentQuery = ""
 
         composeTestRule.setContent {
@@ -121,7 +121,7 @@ class SearchScreenCompleteTest {
     }
 
     @Test
-    fun searchTextField_can_be_disabled() {
+    fun test_searchTextField_disabled_state_works_correctly() {
         composeTestRule.setContent {
             SearchTextField(
                 query = "",
@@ -141,7 +141,7 @@ class SearchScreenCompleteTest {
     // =====================================
 
     @Test
-    fun searchScreen_basic_ui_elements_exist() {
+    fun test_searchScreen_basic_ui_elements_exist() {
         val (summaryUseCase, mediaListUseCase) = createMockUseCases()
         val viewModel = SearchViewModel(summaryUseCase, mediaListUseCase)
 
@@ -170,7 +170,7 @@ class SearchScreenCompleteTest {
     }
 
     @Test
-    fun searchScreen_text_input_changes_icon() {
+    fun test_searchScreen_text_input_changes_icon_correctly() {
         val (summaryUseCase, mediaListUseCase) = createMockUseCases()
         val viewModel = SearchViewModel(summaryUseCase, mediaListUseCase)
 
@@ -205,7 +205,7 @@ class SearchScreenCompleteTest {
     }
 
     @Test
-    fun searchScreen_clear_button_functionality() {
+    fun test_searchScreen_clear_button_functionality_works() {
         val (summaryUseCase, mediaListUseCase) = createMockUseCases()
         val viewModel = SearchViewModel(summaryUseCase, mediaListUseCase)
 
@@ -246,7 +246,7 @@ class SearchScreenCompleteTest {
     }
 
     @Test
-    fun searchScreen_shows_search_results_after_input() {
+    fun test_searchScreen_after_input_shows_search_results() {
         val (summaryUseCase, mediaListUseCase) = createMockUseCases()
         val viewModel = SearchViewModel(summaryUseCase, mediaListUseCase)
 
@@ -288,7 +288,7 @@ class SearchScreenCompleteTest {
     }
 
     @Test
-    fun searchScreen_shows_media_items_after_search() {
+    fun test_searchScreen_after_search_shows_media_items() {
         val (summaryUseCase, mediaListUseCase) = createMockUseCases()
         val viewModel = SearchViewModel(summaryUseCase, mediaListUseCase)
 
@@ -329,7 +329,7 @@ class SearchScreenCompleteTest {
     }
 
     @Test
-    fun searchScreen_handles_detailed_search_flow() {
+    fun test_searchScreen_detailed_search_flow_handles_correctly() {
         val (summaryUseCase, mediaListUseCase) = createMockUseCases()
         val viewModel = SearchViewModel(summaryUseCase, mediaListUseCase)
         val testKeyword = "Android"

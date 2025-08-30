@@ -28,7 +28,7 @@ import org.junit.runner.RunWith
  * 3. Common Mock Setup - 재사용 가능한 Mock 설정
  */
 @RunWith(AndroidJUnit4::class)
-class DetailScreenCompleteTest {
+class DetailAndroidTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
@@ -38,7 +38,7 @@ class DetailScreenCompleteTest {
     // =====================================
 
     @Test
-    fun detail_back_button_displays_correctly() {
+    fun test_detail_backButton_displays_correctly() {
         composeTestRule.setContent {
             IconButton(onClick = { }) {
                 Icon(
@@ -55,7 +55,7 @@ class DetailScreenCompleteTest {
     }
 
     @Test
-    fun detail_title_displays_correctly() {
+    fun test_detail_title_displays_correctly() {
         val testTitle = "Test Title"
         
         composeTestRule.setContent {
@@ -72,7 +72,7 @@ class DetailScreenCompleteTest {
     }
 
     @Test
-    fun detail_loading_indicator_displays() {
+    fun test_detail_loadingIndicator_displays_correctly() {
         composeTestRule.setContent {
             CircularProgressIndicator()
         }
@@ -85,7 +85,7 @@ class DetailScreenCompleteTest {
     }
 
     @Test
-    fun detail_shows_error_message() {
+    fun test_detail_errorMessage_shows_correctly() {
         val errorMessage = "Test error occurred"
 
         composeTestRule.setContent {
@@ -99,7 +99,7 @@ class DetailScreenCompleteTest {
     }
 
     @Test
-    fun detail_back_button_is_clickable() {
+    fun test_detail_backButton_is_clickable() {
         composeTestRule.setContent {
             IconButton(onClick = { }) {
                 Icon(
@@ -123,7 +123,7 @@ class DetailScreenCompleteTest {
     // =====================================
 
     @Test
-    fun detailScreen_displays_correctly_with_real_screen() {
+    fun test_detailScreen_with_real_screen_displays_correctly() {
         val mockUseCase = createMockUseCase()
         val viewModel = DetailViewModel(mockUseCase)
         val testKeyword = "Android Test"
@@ -155,7 +155,7 @@ class DetailScreenCompleteTest {
     }
 
     @Test
-    fun detailScreen_back_button_is_clickable() {
+    fun test_detailScreen_backButton_is_clickable() {
         val mockUseCase = createMockUseCase()
         val viewModel = DetailViewModel(mockUseCase)
 
@@ -180,7 +180,7 @@ class DetailScreenCompleteTest {
     }
 
     @Test
-    fun detailScreen_handles_empty_keyword() {
+    fun test_detailScreen_with_empty_keyword_handles_correctly() {
         val mockUseCase = createMockUseCase()
         val viewModel = DetailViewModel(mockUseCase)
 
@@ -210,7 +210,7 @@ class DetailScreenCompleteTest {
     }
 
     @Test
-    fun detailScreen_shows_loading_initially() {
+    fun test_detailScreen_initialization_shows_loading_initially() {
         val mockUseCase = createMockUseCase()
         val viewModel = DetailViewModel(mockUseCase)
 
@@ -241,7 +241,7 @@ class DetailScreenCompleteTest {
     }
 
     @Test
-    fun detailScreen_header_layout_correct() {
+    fun test_detailScreen_headerLayout_displays_correctly() {
         val mockUseCase = createMockUseCase()
         val viewModel = DetailViewModel(mockUseCase)
         val testKeyword = "Test Keyword"
@@ -272,7 +272,7 @@ class DetailScreenCompleteTest {
     }
 
     @Test
-    fun detailScreen_handles_different_keywords() {
+    fun test_detailScreen_with_different_keywords_handles_correctly() {
         val testCases = listOf(
             "Android",
             "Kotlin Programming",
@@ -312,7 +312,7 @@ class DetailScreenCompleteTest {
     }
 
     @Test
-    fun detailScreen_webview_integration() {
+    fun test_detailScreen_webview_integration_works_correctly() {
         val mockUseCase = createMockUseCase()
         val viewModel = DetailViewModel(mockUseCase)
 

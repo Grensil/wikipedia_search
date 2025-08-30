@@ -27,7 +27,7 @@ import org.junit.Test
  * 특징: 실제 네트워크 호출 없이 ViewModel 로직만 테스트
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class SearchViewModelTest {
+class SearchTest {
 
     private lateinit var viewModel: SearchViewModel
     private lateinit var fakeRepository: FakeWikipediaRepository
@@ -64,7 +64,7 @@ class SearchViewModelTest {
      * 3. 성공 시 Success 상태와 올바른 데이터 반환
      */
     @Test
-    fun `search should update UI state correctly on success`() = runTest {
+    fun test_search_with_valid_searchTerm_updates_uiState_to_success() = runTest {
         // Given: 테스트 데이터 준비
         val searchTerm = "Android"
         val expectedSummary = Summary("Android", "Mobile operating system", "thumb.jpg")
@@ -100,7 +100,7 @@ class SearchViewModelTest {
      * 3. 적절한 에러 메시지 표시
      */
     @Test
-    fun `search should update UI state to error on failure`() = runTest {
+    fun test_search_with_repository_error_updates_uiState_to_error() = runTest {
         // Given: Repository가 예외를 던지도록 설정
         val searchTerm = "FailCase"
         fakeRepository.setShouldThrowError(true)
@@ -125,7 +125,7 @@ class SearchViewModelTest {
      * 2. 적절한 검증 로직 동작 확인
      */
     @Test
-    fun `search with empty term should show error`() = runTest {
+    fun test_search_with_empty_term_shows_error() = runTest {
         // When: 빈 검색어로 검색
         viewModel.search("")
         testDispatcher.scheduler.advanceUntilIdle()
@@ -144,7 +144,7 @@ class SearchViewModelTest {
      * 3. 마지막 검색 결과만 표시되는지 확인
      */
     @Test
-    fun `multiple consecutive searches should cancel previous ones`() = runTest {
+    fun test_search_with_multiple_consecutive_calls_cancels_previous_ones() = runTest {
         // Given: 두 개의 다른 검색어 준비
         val firstTerm = "Android"
         val secondTerm = "iOS"
@@ -176,7 +176,7 @@ class SearchViewModelTest {
      * 2. ViewModel에서 적절히 에러 처리
      */
     @Test
-    fun `search should handle invalid summary from repository`() = runTest {
+    fun test_search_with_invalid_summary_from_repository_handles_error() = runTest {
         // Given: 무효한 Summary 설정 (빈 제목과 설명)
         val searchTerm = "InvalidCase"
         val invalidSummary = Summary("", "", null) // 무효한 Summary
@@ -201,7 +201,7 @@ class SearchViewModelTest {
      * 2. 성공 상태로 처리되어야 함 (미디어가 없을 수도 있음)
      */
     @Test
-    fun `search should handle empty media list gracefully`() = runTest {
+    fun test_search_with_empty_media_list_handles_gracefully() = runTest {
         // Given: 유효한 Summary + 빈 미디어 리스트
         val searchTerm = "EmptyMedia"
         val validSummary = Summary("Valid Title", "Valid Description", "thumb.jpg")
@@ -228,7 +228,7 @@ class SearchViewModelTest {
      * ViewModel 생성 시 초기 상태가 올바른지 확인
      */
     @Test
-    fun `viewModel should have correct initial state`() {
+    fun test_viewModel_creation_has_correct_initial_state() {
         // Then: 초기 상태는 Idle이어야 함
         assertTrue("초기 상태는 Idle이어야 함", viewModel.uiState.value is SearchUiState.Idle)
     }

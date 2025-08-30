@@ -39,7 +39,7 @@ import java.net.URLEncoder
  * - 실제 Wikipedia API 서버 응답에 의존
  */
 @RunWith(AndroidJUnit4::class)
-class RealWikipediaApiAndroidTest {
+class DomainAndroidTest {
 
     private lateinit var realRepository: RealWikipediaRepository
     private lateinit var useCase: GetMediaListUseCase
@@ -72,7 +72,7 @@ class RealWikipediaApiAndroidTest {
      * - 특수문자 제거 로직이 실제 Wikipedia 텍스트에서 올바르게 동작
      */
     @Test
-    fun testRealWikipediaApiCallExtractsKeywordsCorrectly() = runBlocking {
+    fun test_real_wikipedia_api_call_extracts_keywords_correctly() = runBlocking {
         try {
             println("🌐 실제 Wikipedia API 호출 테스트 시작...")
             
@@ -182,7 +182,7 @@ class RealWikipediaApiAndroidTest {
      * - 이미지 URL들이 올바르게 추출되는지
      */
     @Test
-    fun testRealWikipediaSummaryApiCallWorks() = runBlocking {
+    fun test_real_wikipedia_summary_api_call_works() = runBlocking {
         try {
             println("📄 실제 Wikipedia Summary API 호출 테스트 시작...")
             
@@ -241,7 +241,7 @@ class RealWikipediaApiAndroidTest {
      * 일관되게 작동하는지 확인
      */
     @Test
-    fun testKeywordExtractionConsistency() = runBlocking {
+    fun test_keyword_extraction_consistency() = runBlocking {
         val searchTerms = listOf("java", "kotlin", "spring", "react")
         
         searchTerms.forEach { term ->

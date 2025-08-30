@@ -8,7 +8,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class HttpClientAndroidTest {
+class NetworkAndroidTest {
 
     private lateinit var httpClient: HttpClient
 
@@ -18,7 +18,7 @@ class HttpClientAndroidTest {
     }
 
     @Test
-    fun testGet_withHttpsUrl_returnsValidResponse() {
+    fun test_httpClient_get_with_https_url_returns_valid_response() {
         val url = "https://httpbin.org/get"
         
         try {
@@ -35,7 +35,7 @@ class HttpClientAndroidTest {
     }
 
     @Test
-    fun testGet_withCustomHeaders_includesHeadersInRequest() {
+    fun test_httpClient_get_with_custom_headers_includes_headers_in_request() {
         val url = "https://httpbin.org/headers"
         val headers = mapOf(
             "X-Test-Header" to "test-value",
@@ -56,7 +56,7 @@ class HttpClientAndroidTest {
     }
 
     @Test
-    fun testPost_withJsonBody_sendsDataCorrectly() {
+    fun test_httpClient_post_with_json_body_sends_data_correctly() {
         val url = "https://httpbin.org/post"
         val jsonBody = """{"test": "data", "number": 123}"""
         val headers = mapOf("Content-Type" to "application/json")
@@ -76,7 +76,7 @@ class HttpClientAndroidTest {
     }
 
     @Test
-    fun testPut_withData_updatesResource() {
+    fun test_httpClient_put_with_data_updates_resource() {
         val url = "https://httpbin.org/put"
         val body = """{"updated": true, "value": "new"}"""
         
@@ -94,7 +94,7 @@ class HttpClientAndroidTest {
     }
 
     @Test
-    fun testDelete_withValidUrl_returnsSuccess() {
+    fun test_httpClient_delete_with_valid_url_returns_success() {
         val url = "https://httpbin.org/delete"
         
         try {
@@ -110,7 +110,7 @@ class HttpClientAndroidTest {
     }
 
     @Test
-    fun testGet_with404Url_throwsHttpException() {
+    fun test_httpClient_get_with_404_url_throws_http_exception() {
         val url = "https://httpbin.org/status/404"
         
         try {
@@ -134,7 +134,7 @@ class HttpClientAndroidTest {
     }
 
     @Test
-    fun testGet_withInvalidUrl_throwsValidationException() {
+    fun test_httpClient_get_with_invalid_url_throws_validation_exception() {
         val url = "invalid-url"
         
         try {
@@ -150,7 +150,7 @@ class HttpClientAndroidTest {
     }
 
     @Test
-    fun testGet_withTimeout_respectsTimeoutSetting() {
+    fun test_httpClient_get_with_timeout_respects_timeout_setting() {
         val url = "https://httpbin.org/delay/1"
         val shortTimeout = 500 // 0.5초
         
@@ -167,7 +167,7 @@ class HttpClientAndroidTest {
     }
 
     @Test
-    fun testHttpResponse_extensionFunctions_workCorrectly() {
+    fun test_httpResponse_extension_functions_work_correctly() {
         val url = "https://httpbin.org/json"
         
         try {
@@ -188,7 +188,7 @@ class HttpClientAndroidTest {
     }
 
     @Test
-    fun testPost_withEmptyBody_handlesCorrectly() {
+    fun test_httpClient_post_with_empty_body_handles_correctly() {
         val url = "https://httpbin.org/post"
         
         try {
