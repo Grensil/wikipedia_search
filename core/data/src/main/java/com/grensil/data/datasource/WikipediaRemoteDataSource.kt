@@ -1,6 +1,5 @@
 package com.grensil.data.datasource
 
-import android.util.Log
 import com.grensil.data.entity.MediaListEntity
 import com.grensil.data.entity.SummaryEntity
 import com.grensil.data.mapper.WikipediaMapper
@@ -127,35 +126,55 @@ class WikipediaRemoteDataSource(
     /**
      * JSON을 MediaListDto로 수동 파싱 (순수 문자열 파싱으로 JSONObject 의존성 제거)
      */
+
     private fun parseJsonToMediaList(jsonString: String): MediaListEntity {
         try {
-            // items 배열에서 각 객체를 정규식으로 직접 추출하여 매핑
-            val itemPattern = """\{"title":[^}]*(?:\{[^}]*\}[^}]*)*\}""".toRegex()
-            val items = itemPattern.findAll(jsonString)
-                .map { itemMatch ->
-                    val itemJson = itemMatch.value
+            val jsonObject = org.json.JSONObject(jsonString)
+            val items = mutableListOf<MediaListEntity.MediaItemEntity>()
+
+            if (jsonObject.has("items")) {
+                val itemsArray = jsonObject.getJSONArray("items")
+
+                for (i in 0 until itemsArray.length()) {
+                    val itemObj = itemsArray.getJSONObject(i)
 
                     // Caption 파싱
-                    val caption = extractNestedObject(itemJson, "caption")?.let { captionJson ->
+                    val caption = if (itemObj.has("caption")) {
+                        val captionObj = itemObj.getJSONObject("caption")
                         MediaListEntity.MediaItemEntity.CaptionEntity(
-                            text = extractStringValue(captionJson, "text"),
-                            html = extractStringValue(captionJson, "html")
+                            text = captionObj.optString("text").takeIf { it.isNotEmpty() },
+                            html = captionObj.optString("html").takeIf { it.isNotEmpty() }
                         )
-                    }
+                    } else null
 
-                    Log.d("Logd","itemMatch: ${itemMatch.value}}")
-                    // SrcSet 파싱 - 단순화된 추출
-                    val srcSet = extractSrcSet(itemJson)
+                    // SrcSet 파싱
+                    val srcSet = if (itemObj.has("srcset")) {
+                        val srcSetArray = itemObj.getJSONArray("srcset")
+                        val srcList = mutableListOf<MediaListEntity.MediaItemEntity.SrcSetEntity>()
 
-                    MediaListEntity.MediaItemEntity(
-                        title = extractStringValue(itemJson, "title"),
-                        section_id = extractIntValue(itemJson, "section_id"),
-                        type = extractStringValue(itemJson, "type"),
-                        caption = caption,
-                        srcset = srcSet
+                        for (j in 0 until srcSetArray.length()) {
+                            val srcObj = srcSetArray.getJSONObject(j)
+                            srcList.add(
+                                MediaListEntity.MediaItemEntity.SrcSetEntity(
+                                    src = srcObj.optString("src").takeIf { it.isNotEmpty() },
+                                    scale = srcObj.optString("scale").takeIf { it.isNotEmpty() }
+                                )
+                            )
+                        }
+                        srcList
+                    } else emptyList()
+
+                    items.add(
+                        MediaListEntity.MediaItemEntity(
+                            title = itemObj.optString("title").takeIf { it.isNotEmpty() },
+                            section_id = itemObj.optInt("section_id").takeIf { it != 0 },
+                            type = itemObj.optString("type").takeIf { it.isNotEmpty() },
+                            caption = caption,
+                            srcset = srcSet
+                        )
                     )
                 }
-                .toList()
+            }
 
             return MediaListEntity(items = items)
 
@@ -163,17 +182,17 @@ class WikipediaRemoteDataSource(
             throw e
         }
     }
-    
+
     /**
      * SrcSet 배열을 간단히 추출하는 헬퍼 함수
      */
     private fun extractSrcSet(itemJson: String): List<MediaListEntity.MediaItemEntity.SrcSetEntity> {
         val srcSetPattern = """"src"\s*:\s*"([^"]*)"""".toRegex()
         val scalePattern = """"scale"\s*:\s*"([^"]*)"""".toRegex()
-        
+
         val srcMatches = srcSetPattern.findAll(itemJson).map { it.groupValues[1] }.toList()
         val scaleMatches = scalePattern.findAll(itemJson).map { it.groupValues[1] }.toList()
-        
+
         return srcMatches.zip(scaleMatches) { src, scale ->
             MediaListEntity.MediaItemEntity.SrcSetEntity(src = src, scale = scale)
         }
