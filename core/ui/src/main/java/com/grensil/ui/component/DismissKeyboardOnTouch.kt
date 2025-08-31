@@ -27,7 +27,6 @@ fun DismissKeyboardOnTouch(content: @Composable () -> Unit) {
                 focusManager.clearFocus()
             }.pointerInput(Unit) {
                 detectDragGestures { _, dragAmount ->
-                    Log.d("Logd","dragAmount: $dragAmount")
                     focusManager.clearFocus()
                 }
                 detectTapGestures {

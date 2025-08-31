@@ -20,15 +20,4 @@ data class MediaItem(
      * 유효한 미디어 아이템인지 확인
      */
     fun isValid(): Boolean = title.isNotBlank()
-
-    /**
-     * 이미지 타입인지 확인
-     */
-    fun isImage(): Boolean = type.equals("image", ignoreCase = true) ||
-            type.equals("bitmap", ignoreCase = true)
-
-    /**
-     * 표시용 캡션 (빈 경우 제목 사용)
-     */
-    fun getDisplayCaption(): String = caption.ifBlank { title }
 }

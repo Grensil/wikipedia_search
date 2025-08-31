@@ -25,14 +25,12 @@ class WikipediaRemoteDataSource(
     /**
      * 요약 정보 조회
      */
-    suspend fun getSummary(searchTerm: String): Summary {
+    fun getSummary(searchTerm: String): Summary {
         try {
             val url = "$SUMMARY_URL/${searchTerm.trim()}"
             val response = httpClient.get(
-                url = url,
-                headers = mapOf(
-                    "Accept" to "application/json",
-                    "User-Agent" to "NHN-Assignment-App/1.0"
+                url = url, headers = mapOf(
+                    "Accept" to "application/json", "User-Agent" to "NHN-Assignment-App/1.0"
                 )
             )
             // JSON 수동 파싱 (Android 기본 API만 사용)
@@ -49,14 +47,12 @@ class WikipediaRemoteDataSource(
     /**
      * 미디어 목록 조회
      */
-    suspend fun getMediaList(searchTerm: String): List<MediaItem> {
+    fun getMediaList(searchTerm: String): List<MediaItem> {
         try {
             val url = "$MEDIA_LIST_URL/${searchTerm.trim()}"
             val response = httpClient.get(
-                url = url,
-                headers = mapOf(
-                    "Accept" to "application/json",
-                    "User-Agent" to "NHN-Assignment-App/1.0"
+                url = url, headers = mapOf(
+                    "Accept" to "application/json", "User-Agent" to "NHN-Assignment-App/1.0"
                 )
             )
 
@@ -142,8 +138,7 @@ class WikipediaRemoteDataSource(
                         val captionObj = itemObj.getJSONObject("caption")
                         MediaListEntity.MediaItemEntity.CaptionEntity(
                             text = captionObj.optString("text").takeIf { it.isNotEmpty() },
-                            html = captionObj.optString("html").takeIf { it.isNotEmpty() }
-                        )
+                            html = captionObj.optString("html").takeIf { it.isNotEmpty() })
                     } else null
 
                     // SrcSet 파싱
@@ -155,10 +150,10 @@ class WikipediaRemoteDataSource(
                             val srcObj = srcSetArray.getJSONObject(j)
                             srcList.add(
                                 MediaListEntity.MediaItemEntity.SrcSetEntity(
-                                    src = srcObj.optString("src").takeIf { it.isNotEmpty() },
-                                    scale = srcObj.optString("scale").takeIf { it.isNotEmpty() }
-                                )
-                            )
+                                src = srcObj.optString(
+                                    "src"
+                                ).takeIf { it.isNotEmpty() },
+                                scale = srcObj.optString("scale").takeIf { it.isNotEmpty() }))
                         }
                         srcList
                     } else emptyList()
@@ -216,14 +211,8 @@ class WikipediaRemoteDataSource(
     private fun extractTextValue(json: String, key: String): String? {
         val pattern = """"$key"\s*:\s*"((?:[^"\\]|\\.)*)""""
         val match = Regex(pattern, RegexOption.DOT_MATCHES_ALL).find(json)
-        return match?.groupValues?.get(1)?.takeIf { it.isNotEmpty() }?.let {
-            // JSON 이스케이프 문자 처리
-            it.replace("\\\"", "\"")
-              .replace("\\\\", "\\")
-              .replace("\\n", "\n")
-              .replace("\\r", "\r")
-              .replace("\\t", "\t")
-        }
+        return match?.groupValues?.get(1)?.takeIf { it.isNotEmpty() }?.replace("\\\"", "\"")
+            ?.replace("\\\\", "\\")?.replace("\\n", "\n")?.replace("\\r", "\r")?.replace("\\t", "\t")
     }
 
     /**

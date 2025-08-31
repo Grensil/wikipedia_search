@@ -1,6 +1,5 @@
 package com.grensil.network
 
-import com.grensil.network.BuildConfig
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter

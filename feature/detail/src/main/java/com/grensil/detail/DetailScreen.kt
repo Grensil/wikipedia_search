@@ -1,7 +1,6 @@
 package com.grensil.detail
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler

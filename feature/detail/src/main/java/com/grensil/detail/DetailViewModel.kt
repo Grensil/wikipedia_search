@@ -1,6 +1,5 @@
 package com.grensil.detail
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grensil.domain.usecase.GetDetailPageUrlUseCase
@@ -27,7 +26,6 @@ class DetailViewModel(
             val url = getDetailPageUrlUseCase(keyword)
             _uiState.value = DetailUiState.Success(url)
         } catch (e: Exception) {
-            Log.e("SearchViewModel", "Search error for '$keyword': ${e.message}", e)
 
             val errorMessage = when {
                 e.message?.contains("404") == true || e.message?.contains("Not Found") == true ->

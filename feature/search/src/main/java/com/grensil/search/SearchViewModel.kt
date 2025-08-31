@@ -1,6 +1,5 @@
 package com.grensil.search
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grensil.domain.dto.MediaItem

@@ -1,6 +1,5 @@
 package com.grensil.data.repository
 
-import android.util.Log
 import com.grensil.data.datasource.WikipediaRemoteDataSource
 import com.grensil.domain.dto.MediaItem
 import com.grensil.domain.dto.Summary

@@ -2,7 +2,6 @@ package com.grensil.ui.image
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.core.graphics.scale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,50 +26,24 @@ suspend fun loadBitmapFromUrl(url: String, width: Int? = null, height: Int? = nu
             connection.connect()
 
             val bytes = connection.inputStream.readBytes()
-            Log.d("LoadImage", "Downloaded ${bytes.size} bytes")
-
-            // PNG 헤더 확인 (89 50 4E 47 0D 0A 1A 0A)
-            if (bytes.size >= 8) {
-                val header = bytes.take(8)
-                val headerHex = header.joinToString(" ") { "%02X".format(it) }
-                Log.d("LoadImage", "File header: $headerHex")
-
-                val isPng = header[0] == 0x89.toByte() &&
-                        header[1] == 0x50.toByte() &&
-                        header[2] == 0x4E.toByte() &&
-                        header[3] == 0x47.toByte()
-                Log.d("LoadImage", "Is PNG: $isPng")
-            }
-
             val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            Log.d("LoadImage", "Bitmap decoded: ${bitmap != null}")
-            bitmap?.let {
-                Log.d("LoadImage", "Bitmap size: ${it.width}x${it.height}, config: ${it.config}")
-            }
 
             val scaled = bitmap?.let { original ->
                 val targetWidth = width ?: original.width
                 val targetHeight = height ?: original.height
 
-                Log.d("LoadImage", "Scaling from ${original.width}x${original.height} to ${targetWidth}x${targetHeight}")
-
                 if (targetWidth > 0 && targetHeight > 0) {
                     original.scale(targetWidth, targetHeight)
                 } else {
-                    Log.e("LoadImage", "Invalid scale dimensions: ${targetWidth}x${targetHeight}")
                     original
                 }
             }
 
             scaled?.let {
-                Log.d("LoadImage", "Putting in cache: ${safeUrl}")
                 MemoryCache.put(safeUrl, it)
             }
-            Log.d("LoadImage", "Final result: ${scaled != null}")
-
             scaled
         } catch (e: Exception) {
-            Log.d("LoadImage", "error: ${e}")
             e.printStackTrace()
             null
         }
