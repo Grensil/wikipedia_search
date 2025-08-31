@@ -1,5 +1,6 @@
 package com.grensil.search
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grensil.domain.dto.MediaItem
@@ -48,18 +49,18 @@ class SearchViewModel(
             .debounce(300)
             .distinctUntilChanged()
             .flatMapLatest { keyword ->
-                emitScrollToTop(keyword)
                 performSearchFlow(keyword)
             }
             .onEach { result ->
                 _searchedData.value = result
+                // 검색 결과가 성공적으로 로드된 후 스크롤
+                if (result is SearchUiState.Success) {
+                    _scrollToTopEvent.emit(Unit)
+                }
             }
             .launchIn(viewModelScope)
     }
 
-    private fun emitScrollToTop(keyword: String): Flow<Unit> = flow {
-        emit(_scrollToTopEvent.emit(Unit))
-    }
 
     fun search(keyword: String) {
         _searchQuery.value = keyword

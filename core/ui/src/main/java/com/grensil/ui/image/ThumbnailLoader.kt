@@ -10,8 +10,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 suspend fun loadBitmapFromUrl(url: String, width: Int? = null, height: Int? = null): Bitmap? {
-    Log.d("Logd","${url}")
-
     val safeUrl = safeUrl(url)
     MemoryCache.get(safeUrl)?.let { return it } // 캐시 체크
 

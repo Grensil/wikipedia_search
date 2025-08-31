@@ -70,19 +70,10 @@ fun DetailScreen(
                     IconButton(
                         onClick = {
                             val previousEntry = navController.previousBackStackEntry
-                            Log.d("DetailScreen", "Previous entry exists: ${previousEntry != null}")
-                            Log.d(
-                                "DetailScreen",
-                                "Previous route: ${previousEntry?.destination?.route}"
-                            )
+
 
                             if (previousEntry != null) {
-                                Log.d("DetailScreen", "Popping back stack")
                                 navController.popBackStack()
-                            } else {
-                                Log.d(
-                                    "DetailScreen", "No previous entry, navigating to search"
-                                )
                             }
                         }) {
                         Icon(
@@ -157,19 +148,9 @@ fun WebPage(url: String, navController: NavHostController) {
                 webView.goBack()
             } else {
                 val previousEntry = navController.previousBackStackEntry
-                Log.d("DetailScreen", "Previous entry exists: ${previousEntry != null}")
-                Log.d(
-                    "DetailScreen",
-                    "Previous route: ${previousEntry?.destination?.route}"
-                )
 
                 if (previousEntry != null) {
-                    Log.d("DetailScreen", "Popping back stack")
                     navController.popBackStack()
-                } else {
-                    Log.d(
-                        "DetailScreen", "No previous entry, navigating to search"
-                    )
                 }
             }
         }

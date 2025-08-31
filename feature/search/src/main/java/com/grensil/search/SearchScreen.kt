@@ -54,6 +54,7 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavHostController) {
     // Side effects
     LaunchedEffect(Unit) {
         viewModel.scrollToTopEvent.collect {
+            Log.d("Logd","scrollToTopEvent")
             isProgrammaticScroll = true
             listState.animateScrollToItem(0)
             isProgrammaticScroll = false
