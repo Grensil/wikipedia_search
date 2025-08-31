@@ -9,6 +9,10 @@ coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.0"
+rules = "1.7.0"
+runner = "1.7.0"
+testRules = "1.5.0"
+testRunner = "1.5.2"
 appcompat = "1.7.1"
 kotlinxCoroutinesCore = "1.10.2"
 kotlinxCoroutinesCoreVersion = "1.9.0"
@@ -39,6 +43,8 @@ androidx-junit-ktx-v115 = { module = "androidx.test.ext:junit-ktx", version.ref 
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelComposeVersion" }
 androidx-material3 = { module = "androidx.compose.material3:material3" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+androidx-rules-v170 = { module = "androidx.test:rules", version.ref = "rules" }
+androidx-runner-v170 = { module = "androidx.test:runner", version.ref = "runner" }
 androidx-ui = { module = "androidx.compose.ui:ui" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
@@ -46,6 +52,8 @@ androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "testRules" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-coroutines-core-v190 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCoreVersion" }

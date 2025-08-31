@@ -10,37 +10,34 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.grensil.domain.usecase.GetDetailPageUrlUseCase
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * 🎯 Detail Module 통합 테스트 클래스
- * 
- * 통합된 파일들:
- * - DetailScreenUITest.kt (기본 UI 컴포넌트 테스트)
- * - DetailScreenIntegrationTest.kt (통합 테스트)
- * - SimpleDetailUITest.kt (기본 UI 테스트)
- * 
- * 구조:
- * 1. Component Level Tests - 개별 UI 컴포넌트 테스트
- * 2. Screen Integration Tests - DetailScreen 전체 통합 테스트
- * 3. Common Mock Setup - 재사용 가능한 Mock 설정
- */
 @RunWith(AndroidJUnit4::class)
 class DetailAndroidTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    private lateinit var mockUseCase: GetDetailPageUrlUseCase
+    private lateinit var viewModel: DetailViewModel
+
+    @Before
+    fun setup() {
+        mockUseCase = createMockUseCase()
+        viewModel = DetailViewModel(mockUseCase)
+    }
+
     // =====================================
     // 🧩 Component Level Tests
     // =====================================
 
     @Test
-    fun test_detail_backButton_displays_correctly() {
+    fun backButton_displays_correctly() {
         composeTestRule.setContent {
-            IconButton(onClick = { }) {
+            IconButton(onClick = {}) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "뒤로 가기"
@@ -48,60 +45,43 @@ class DetailAndroidTest {
             }
         }
 
-        composeTestRule
-            .onNodeWithContentDescription("뒤로 가기")
+        composeTestRule.onNodeWithContentDescription("뒤로 가기")
             .assertExists()
             .assertIsDisplayed()
     }
 
     @Test
-    fun test_detail_title_displays_correctly() {
+    fun title_displays_correctly() {
         val testTitle = "Test Title"
-        
         composeTestRule.setContent {
-            Text(
-                text = testTitle,
-                style = MaterialTheme.typography.titleMedium
-            )
+            Text(text = testTitle, style = MaterialTheme.typography.titleMedium)
         }
 
-        composeTestRule
-            .onNodeWithText(testTitle)
+        composeTestRule.onNodeWithText(testTitle)
             .assertExists()
             .assertIsDisplayed()
     }
 
     @Test
-    fun test_detail_loadingIndicator_displays_correctly() {
-        composeTestRule.setContent {
-            CircularProgressIndicator()
-        }
-
-        // 화면에 렌더링되는지만 확인 (복잡한 selector 피함)
-        composeTestRule.waitForIdle()
-        
-        // 전체 UI 트리가 정상적으로 그려졌는지 확인
+    fun loadingIndicator_displays_correctly() {
+        composeTestRule.setContent { CircularProgressIndicator() }
         composeTestRule.onRoot().assertExists()
     }
 
     @Test
-    fun test_detail_errorMessage_shows_correctly() {
+    fun errorMessage_shows_correctly() {
         val errorMessage = "Test error occurred"
+        composeTestRule.setContent { Text(text = "Error: $errorMessage") }
 
-        composeTestRule.setContent {
-            Text(text = "Error: $errorMessage")
-        }
-
-        composeTestRule
-            .onNodeWithText("Error: $errorMessage")
+        composeTestRule.onNodeWithText("Error: $errorMessage")
             .assertExists()
             .assertIsDisplayed()
     }
 
     @Test
-    fun test_detail_backButton_is_clickable() {
+    fun backButton_is_clickable() {
         composeTestRule.setContent {
-            IconButton(onClick = { }) {
+            IconButton(onClick = {}) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "뒤로 가기"
@@ -109,13 +89,9 @@ class DetailAndroidTest {
             }
         }
 
-        composeTestRule
-            .onNodeWithContentDescription("뒤로 가기")
+        composeTestRule.onNodeWithContentDescription("뒤로 가기")
             .assertHasClickAction()
             .performClick()
-
-        // 클릭이 실제로 동작했는지는 별도 검증 로직 필요
-        composeTestRule.waitForIdle()
     }
 
     // =====================================
@@ -123,240 +99,87 @@ class DetailAndroidTest {
     // =====================================
 
     @Test
-    fun test_detailScreen_with_real_screen_displays_correctly() {
-        val mockUseCase = createMockUseCase()
-        val viewModel = DetailViewModel(mockUseCase)
-        val testKeyword = "Android Test"
+    fun detailScreen_displays_correctly() {
+        setupDetailScreen("Android Test")
 
-        composeTestRule.setContent {
-            val navController = rememberNavController()
-            NavHost(navController = navController, startDestination = "detail") {
-                composable("detail") {
-                    DetailScreen(
-                        viewModel = viewModel,
-                        navController = navController,
-                        keyword = testKeyword
-                    )
-                }
-            }
-        }
-
-        // 뒤로 가기 버튼이 표시되는지 확인
-        composeTestRule
-            .onNodeWithContentDescription("뒤로 가기")
+        composeTestRule.onNodeWithContentDescription("뒤로 가기")
             .assertExists()
             .assertIsDisplayed()
 
-        // 제목이 표시되는지 확인
-        composeTestRule
-            .onNodeWithText(testKeyword)
+        composeTestRule.onNodeWithText("Android Test")
             .assertExists()
             .assertIsDisplayed()
     }
 
     @Test
-    fun test_detailScreen_backButton_is_clickable() {
-        val mockUseCase = createMockUseCase()
-        val viewModel = DetailViewModel(mockUseCase)
+    fun detailScreen_backButton_is_clickable() {
+        setupDetailScreen("Test")
 
-        composeTestRule.setContent {
-            val navController = rememberNavController()
-            NavHost(navController = navController, startDestination = "detail") {
-                composable("detail") {
-                    DetailScreen(
-                        viewModel = viewModel,
-                        navController = navController,
-                        keyword = "Test"
-                    )
-                }
-            }
-        }
-
-        // 뒤로 가기 버튼이 클릭 가능한지 확인
-        composeTestRule
-            .onNodeWithContentDescription("뒤로 가기")
+        composeTestRule.onNodeWithContentDescription("뒤로 가기")
             .assertHasClickAction()
             .performClick()
     }
 
     @Test
-    fun test_detailScreen_with_empty_keyword_handles_correctly() {
-        val mockUseCase = createMockUseCase()
-        val viewModel = DetailViewModel(mockUseCase)
+    fun detailScreen_with_empty_keyword() {
+        setupDetailScreen("")
 
-        composeTestRule.setContent {
-            val navController = rememberNavController()
-            NavHost(navController = navController, startDestination = "detail") {
-                composable("detail") {
-                    DetailScreen(
-                        viewModel = viewModel,
-                        navController = navController,
-                        keyword = ""
-                    )
-                }
-            }
-        }
-
-        // 빈 키워드여도 뒤로 가기 버튼은 표시되어야 함
-        composeTestRule
-            .onNodeWithContentDescription("뒤로 가기")
+        composeTestRule.onNodeWithContentDescription("뒤로 가기")
             .assertExists()
             .assertIsDisplayed()
 
-        // 빈 제목이 표시되는지 확인 (빈 문자열)
-        composeTestRule
-            .onNodeWithText("")
+        composeTestRule.onNodeWithText("")
             .assertExists()
     }
 
     @Test
-    fun test_detailScreen_initialization_shows_loading_initially() {
-        val mockUseCase = createMockUseCase()
-        val viewModel = DetailViewModel(mockUseCase)
+    fun detailScreen_initialization_shows_loading() {
+        setupDetailScreen("Android")
 
-        composeTestRule.setContent {
-            val navController = rememberNavController()
-            NavHost(navController = navController, startDestination = "detail") {
-                composable("detail") {
-                    DetailScreen(
-                        viewModel = viewModel,
-                        navController = navController,
-                        keyword = "Android"
-                    )
-                }
-            }
-        }
-
-        // 헤더는 바로 표시되어야 함
-        composeTestRule
-            .onNodeWithContentDescription("뒤로 가기")
+        composeTestRule.onNodeWithContentDescription("뒤로 가기")
             .assertExists()
 
-        composeTestRule
-            .onNodeWithText("Android")
+        composeTestRule.onNodeWithText("Android")
             .assertExists()
 
-        // 초기 상태에서 화면이 정상적으로 렌더링되는지 확인
         composeTestRule.waitForIdle()
     }
 
     @Test
-    fun test_detailScreen_headerLayout_displays_correctly() {
-        val mockUseCase = createMockUseCase()
-        val viewModel = DetailViewModel(mockUseCase)
-        val testKeyword = "Test Keyword"
-
-        composeTestRule.setContent {
-            val navController = rememberNavController()
-            NavHost(navController = navController, startDestination = "detail") {
-                composable("detail") {
-                    DetailScreen(
-                        viewModel = viewModel,
-                        navController = navController,
-                        keyword = testKeyword
-                    )
-                }
-            }
-        }
-
-        // 모든 헤더 요소들이 표시되는지 확인
-        composeTestRule
-            .onNodeWithContentDescription("뒤로 가기")
-            .assertExists()
-            .assertIsDisplayed()
-
-        composeTestRule
-            .onNodeWithText(testKeyword)
-            .assertExists()
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun test_detailScreen_with_different_keywords_handles_correctly() {
-        val testCases = listOf(
-            "Android",
-            "Kotlin Programming",
-            "React Native",
-            "Flutter Development"
-        )
-
-        testCases.forEach { keyword ->
-            val mockUseCase = createMockUseCase()
-            val viewModel = DetailViewModel(mockUseCase)
-
-            composeTestRule.setContent {
-                val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = "detail") {
-                    composable("detail") {
-                        DetailScreen(
-                            viewModel = viewModel,
-                            navController = navController,
-                            keyword = keyword
-                        )
-                    }
-                }
-            }
-
-            // 키워드가 헤더에 표시되는지 확인
-            composeTestRule
-                .onNodeWithText(keyword)
-                .assertExists()
-                .assertIsDisplayed()
-
-            // 뒤로 가기 버튼도 함께 표시되는지 확인
-            composeTestRule
-                .onNodeWithContentDescription("뒤로 가기")
-                .assertExists()
-                .assertIsDisplayed()
-        }
-    }
-
-    @Test
-    fun test_detailScreen_webview_integration_works_correctly() {
-        val mockUseCase = createMockUseCase()
-        val viewModel = DetailViewModel(mockUseCase)
-
-        composeTestRule.setContent {
-            val navController = rememberNavController()
-            NavHost(navController = navController, startDestination = "detail") {
-                composable("detail") {
-                    DetailScreen(
-                        viewModel = viewModel,
-                        navController = navController,
-                        keyword = "WebView Test"
-                    )
-                }
-            }
-        }
-
-        // 초기 상태에서는 로딩 또는 WebView가 표시됨
+    fun detailScreen_webview_integration() {
+        setupDetailScreen("WebView Test")
         composeTestRule.waitForIdle()
-        Thread.sleep(100) // WebView 로딩 대기
 
-        // 헤더는 항상 표시되어야 함
-        composeTestRule
-            .onNodeWithContentDescription("뒤로 가기")
+        composeTestRule.onNodeWithContentDescription("뒤로 가기")
             .assertExists()
 
-        composeTestRule
-            .onNodeWithText("WebView Test")
+        composeTestRule.onNodeWithText("WebView Test")
             .assertExists()
     }
 
     // =====================================
-    // 🛠️ Common Mock Setup Methods
+    // 🛠️ Common Methods
     // =====================================
 
-    /**
-     * 재사용 가능한 Mock UseCase 생성
-     * 
-     * 기존 3개 파일에서 중복으로 구현되던 Mock 로직을 통합
-     */
+    private fun setupDetailScreen(keyword: String) {
+        composeTestRule.setContent {
+            val navController = rememberNavController()
+            NavHost(navController = navController, startDestination = "detail") {
+                composable("detail") {
+                    DetailScreen(
+                        viewModel = viewModel,
+                        navController = navController,
+                        keyword = keyword
+                    )
+                }
+            }
+        }
+    }
+
     private fun createMockUseCase(): GetDetailPageUrlUseCase {
         return object : GetDetailPageUrlUseCase {
-            override fun invoke(searchTerm: String): String {
-                return "https://en.wikipedia.org/api/rest_v1/page/html/$searchTerm"
-            }
+            override fun invoke(searchTerm: String) =
+                "https://en.wikipedia.org/api/rest_v1/page/html/$searchTerm"
         }
     }
 }

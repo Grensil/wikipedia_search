@@ -35,7 +35,6 @@ class WikipediaRemoteDataSource(
                     "User-Agent" to "NHN-Assignment-App/1.0"
                 )
             )
-
             // JSON 수동 파싱 (Android 기본 API만 사용)
             val summaryDto = parseJsonToSummary(response.body)
             return WikipediaMapper.mapToSummary(summaryDto)
@@ -108,7 +107,7 @@ class WikipediaRemoteDataSource(
                 title = extractStringValue(jsonString, "title"),
                 displaytitle = extractStringValue(jsonString, "displaytitle"),
                 pageid = extractIntValue(jsonString, "pageid"),
-                extract = extractStringValue(jsonString, "extract"),
+                extract = extractTextValue(jsonString, "extract"),
                 extractHtml = extractStringValue(jsonString, "extract_html"),
                 thumbnail = thumbnail,
                 originalimage = originalImage,
@@ -209,6 +208,22 @@ class WikipediaRemoteDataSource(
         val pattern = """"$key"\s*:\s*"([^"]*)""""
         val match = Regex(pattern).find(json)
         return match?.groupValues?.get(1)?.takeIf { it.isNotEmpty() }
+    }
+
+    /**
+     * JSON 문자열에서 긴 텍스트 값 추출 (extract 같은 필드용)
+     */
+    private fun extractTextValue(json: String, key: String): String? {
+        val pattern = """"$key"\s*:\s*"((?:[^"\\]|\\.)*)""""
+        val match = Regex(pattern, RegexOption.DOT_MATCHES_ALL).find(json)
+        return match?.groupValues?.get(1)?.takeIf { it.isNotEmpty() }?.let {
+            // JSON 이스케이프 문자 처리
+            it.replace("\\\"", "\"")
+              .replace("\\\\", "\\")
+              .replace("\\n", "\n")
+              .replace("\\r", "\r")
+              .replace("\\t", "\t")
+        }
     }
 
     /**
