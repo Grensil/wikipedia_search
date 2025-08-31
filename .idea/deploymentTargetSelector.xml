@@ -8,10 +8,7 @@
       <SelectionState runConfigName="core.network">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="test_searchTextField_rapid_sequential_input_handles_race_conditions()">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
-      <SelectionState runConfigName="test_searchTextField_mixed_speed_input_race_condition()">
+      <SelectionState runConfigName="DetailAndroidTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

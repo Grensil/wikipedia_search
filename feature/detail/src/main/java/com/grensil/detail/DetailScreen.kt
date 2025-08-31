@@ -139,6 +139,7 @@ fun DetailScreen(
 @Composable
 fun WebPage(url: String, navController: NavHostController) {
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
 
     // Compose 백버튼 처리
     BackHandler(enabled = true) {
@@ -164,7 +165,12 @@ fun WebPage(url: String, navController: NavHostController) {
             factory = { context ->
                 WebView(context).apply {
                     settings.javaScriptEnabled = true
-                    webViewClient = WebViewClient()
+                    webViewClient = object : WebViewClient() {
+                        override fun onPageCommitVisible(view: WebView?, url: String?) {
+                            super.onPageCommitVisible(view, url)
+                            isLoading = false
+                        }
+                    }
                     setBackgroundColor(android.graphics.Color.TRANSPARENT)
                     loadUrl(url)
                     webViewRef = this
@@ -176,5 +182,14 @@ fun WebPage(url: String, navController: NavHostController) {
             },
             modifier = Modifier.fillMaxSize()
         )
+
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .size(40.dp)
+                    .align(Alignment.Center)
+            )
+        }
     }
 }
