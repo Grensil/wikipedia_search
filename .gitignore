@@ -21,3 +21,8 @@ local.properties
 
 # Generated APK with custom name
 Nhn_Grensil_*.apk
+
+# Keystore files
+*.keystore
+*.jks
+release-key.keystore
