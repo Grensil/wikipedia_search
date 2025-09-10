@@ -5,8 +5,9 @@ import com.grensil.data.entity.SummaryEntity
 import com.grensil.data.mapper.WikipediaMapper
 import com.grensil.domain.dto.MediaItem
 import com.grensil.domain.dto.Summary
+import com.grensil.domain.error.DomainError
+import com.grensil.domain.error.NetworkErrorType
 import com.grensil.network.HttpClient
-import com.grensil.network.NhnNetworkException
 
 /**
  * Wikipedia API 원격 데이터 소스
@@ -37,10 +38,12 @@ class WikipediaRemoteDataSource(
             val summaryDto = parseJsonToSummary(response.body)
             return WikipediaMapper.mapToSummary(summaryDto)
 
-        } catch (e: NhnNetworkException) {
-            throw e // 네트워크 예외는 그대로 전파
         } catch (e: Exception) {
-            throw e
+            if (e.javaClass.name.contains("NhnNetworkException")) {
+                throw mapToDomainError(e)
+            } else {
+                throw DomainError.UnknownError(e)
+            }
         }
     }
 
@@ -61,10 +64,12 @@ class WikipediaRemoteDataSource(
 
             return WikipediaMapper.mapToMediaItemList(mediaListDto)
 
-        } catch (e: NhnNetworkException) {
-            throw e // 네트워크 예외는 그대로 전파
         } catch (e: Exception) {
-            throw e
+            if (e.javaClass.name.contains("NhnNetworkException")) {
+                throw mapToDomainError(e)
+            } else {
+                throw DomainError.UnknownError(e)
+            }
         }
     }
 
@@ -231,6 +236,79 @@ class WikipediaRemoteDataSource(
         val pattern = """"$key"\s*:\s*(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})"""
         val match = Regex(pattern).find(json)
         return match?.groupValues?.get(1)
+    }
+
+    /**
+     * NhnNetworkException을 DomainError로 변환
+     * 클래스명 문자열 기반으로 예외 타입을 판단하여 네트워크 모듈 의존성을 제거
+     */
+    private fun mapToDomainError(exception: Exception): DomainError {
+        val className = exception.javaClass.simpleName
+        val message = exception.message
+        
+        return when {
+            className.contains("HttpExceptionNhn") -> {
+                // HTTP 상태코드 추출 (메시지에서 파싱)
+                val statusCode = extractHttpStatusCode(message)
+                val errorType = when (statusCode) {
+                    404 -> NetworkErrorType.NOT_FOUND
+                    in 400..499 -> NetworkErrorType.INVALID_REQUEST
+                    in 500..599 -> NetworkErrorType.SERVER_ERROR
+                    else -> NetworkErrorType.CONNECTION_FAILED
+                }
+                DomainError.NetworkError(
+                    type = errorType,
+                    httpCode = statusCode,
+                    originalMessage = message
+                )
+            }
+            className.contains("TimeoutExceptionNhn") -> {
+                DomainError.NetworkError(
+                    type = NetworkErrorType.TIMEOUT,
+                    originalMessage = message
+                )
+            }
+            className.contains("ConnectionExceptionNhn") -> {
+                DomainError.NetworkError(
+                    type = NetworkErrorType.CONNECTION_FAILED,
+                    originalMessage = message
+                )
+            }
+            className.contains("SSLExceptionNhn") -> {
+                DomainError.NetworkError(
+                    type = NetworkErrorType.SSL_ERROR,
+                    originalMessage = message
+                )
+            }
+            className.contains("ParseExceptionNhn") -> {
+                DomainError.NetworkError(
+                    type = NetworkErrorType.PARSE_ERROR,
+                    originalMessage = message
+                )
+            }
+            className.contains("InvalidUrlExceptionNhn") -> {
+                DomainError.NetworkError(
+                    type = NetworkErrorType.INVALID_URL,
+                    originalMessage = message
+                )
+            }
+            else -> {
+                // 알 수 없는 네트워크 예외
+                DomainError.NetworkError(
+                    type = NetworkErrorType.CONNECTION_FAILED,
+                    originalMessage = message
+                )
+            }
+        }
+    }
+    
+    /**
+     * HTTP 에러 메시지에서 상태코드 추출
+     */
+    private fun extractHttpStatusCode(message: String?): Int? {
+        if (message == null) return null
+        val pattern = """HTTP (\d+)""".toRegex()
+        return pattern.find(message)?.groupValues?.get(1)?.toIntOrNull()
     }
 
 }
