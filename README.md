@@ -1,10 +1,8 @@
-# NHNGrensil
-
 Wikipedia 검색 및 미디어 조회 Android 앱
 
 ## 프로젝트 개요
 
-NHNGrensil은 Wikipedia API를 활용하여 검색과 미디어 콘텐츠 조회 기능을 제공하는 Android 애플리케이션입니다. 
+Wikipedia API를 활용하여 검색과 미디어 콘텐츠 조회 기능을 제공하는 Android 애플리케이션입니다. 
 Clean Architecture와 모듈화 설계를 통해 확장성과 유지보수성을 고려하여 개발되었습니다.
 
 ## 주요 기능
@@ -33,7 +31,6 @@ Clean Architecture와 모듈화 설계를 통해 확장성과 유지보수성을
 ## 프로젝트 구조
 
 ```
-nhn_gmail/
 ├── app/                          # 메인 애플리케이션 모듈
 │   └── src/main/java/com/grensil/nhn_gmail/
 │       ├── MainActivity.kt       # 진입점 Activity

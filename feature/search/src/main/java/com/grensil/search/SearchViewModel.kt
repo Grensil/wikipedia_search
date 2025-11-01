@@ -8,8 +8,11 @@ import com.grensil.domain.error.DomainError
 import com.grensil.domain.error.NetworkErrorType
 import com.grensil.domain.usecase.GetMediaListUseCase
 import com.grensil.domain.usecase.GetSummaryUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,13 +91,14 @@ class SearchViewModel(
             emit(SearchUiState.Idle)
             return@flow
         }
-
         emit(SearchUiState.Loading)
 
-        val summary = getSummaryUseCase(keyword)
-        val mediaList = getMediaListUseCase(keyword)
+        coroutineScope {
+            val summary = async { getSummaryUseCase(keyword) }
+            val mediaList = async { getMediaListUseCase(keyword) }
 
-        emit(SearchUiState.Success(summary, mediaList))
+            emit(SearchUiState.Success(summary.await(), mediaList.await()))
+        }
 
     }.catch { throwable ->
         val e = throwable as? Exception ?: Exception(throwable)
@@ -105,24 +109,32 @@ class SearchViewModel(
     private fun getErrorMessage(error: DomainError, keyword: String): String {
         return when (error) {
             is DomainError.NetworkError -> when (error.type) {
-                NetworkErrorType.NOT_FOUND -> 
+                NetworkErrorType.NOT_FOUND ->
                     "'$keyword'에 대한 검색 결과가 없습니다. 다른 검색어를 시도해보세요."
-                NetworkErrorType.TIMEOUT -> 
+
+                NetworkErrorType.TIMEOUT ->
                     "연결 시간이 초과되었습니다. 다시 시도해주세요."
-                NetworkErrorType.CONNECTION_FAILED -> 
+
+                NetworkErrorType.CONNECTION_FAILED ->
                     "인터넷 연결을 확인해주세요"
-                NetworkErrorType.SERVER_ERROR -> 
+
+                NetworkErrorType.SERVER_ERROR ->
                     "서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
-                NetworkErrorType.SSL_ERROR -> 
+
+                NetworkErrorType.SSL_ERROR ->
                     "보안 연결에 문제가 발생했습니다. 다시 시도해주세요."
-                NetworkErrorType.PARSE_ERROR -> 
+
+                NetworkErrorType.PARSE_ERROR ->
                     "데이터 처리 중 오류가 발생했습니다."
-                NetworkErrorType.INVALID_REQUEST, NetworkErrorType.INVALID_URL -> 
+
+                NetworkErrorType.INVALID_REQUEST, NetworkErrorType.INVALID_URL ->
                     "잘못된 요청입니다. 검색어를 확인해주세요."
             }
-            is DomainError.ValidationError -> 
+
+            is DomainError.ValidationError ->
                 error.reason
-            is DomainError.UnknownError -> 
+
+            is DomainError.UnknownError ->
                 "알 수 없는 오류가 발생했습니다"
         }
     }
