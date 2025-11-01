@@ -1,3 +1,5 @@
+# WikiPedia 검색 앱(멀티모듈 및 클린아키텍처 공부용)
+
 Wikipedia 검색 및 미디어 조회 Android 앱
 
 ## 프로젝트 개요
